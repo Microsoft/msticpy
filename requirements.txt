@@ -43,6 +43,7 @@ requests>=2.21.1
 setuptools>=40.6.3
 # splunk-sdk>=1.6.0  # splunk
 # statsmodels>=0.11.1  # timeseries
+sumologic-sdk>=0.1.11
 tldextract>=2.2.2
 tqdm>=4.36.1
 urllib3>=1.23

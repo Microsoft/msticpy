@@ -33,6 +33,7 @@ class DataFamily(Enum):
     AzureNetwork = 6
     MDATP = 7
     Splunk = 8
+    Sumologic = 9
 
     @classmethod
     def parse(cls, value: Union[str, int]) -> "DataFamily":
@@ -86,6 +87,7 @@ class DataEnvironment(Enum):
     LocalData = 6
     Splunk = 7
     Mordor = 8
+    Sumologic = 9
 
     @classmethod
     def parse(cls, value: Union[str, int]) -> "DataEnvironment":

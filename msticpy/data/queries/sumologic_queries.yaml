@@ -1,0 +1,51 @@
+metadata:
+  version: 1
+  description: Sumologic Queries
+  data_environments: [Sumologic]
+  data_families: [SumologicGeneral]
+  tags: ['alert', 'securityalert', 'process', 'account', 'network']
+defaults:
+  metadata:
+    data_source: 'bots'
+  parameters:
+    _index:
+      description: 'Sumologic index name'
+      type: str
+      default: '*'
+    _sourceCategory:
+      description: 'Sumologic sourceCategory type'
+      type: str
+      default: '*'
+    start:
+      description: Query start time
+      type: datetime
+      default: 2017-08-25T00:00:00
+    end:
+      description: Query end time
+      type: datetime
+      default: 2017-08-26T00:00:00
+    project_fields:
+      description: Project Field names
+      type: str
+      default: '| fields TimeCreated, host, EventID, EventDescription, User, process, cmdline, Image, parent_process, ParentCommandLine, dest, Hashes'
+    add_query_items:
+      description: Additional query clauses
+      type: str
+      default: '| top 100'
+    timeformat:
+      description: 'Datetime format to use in Sumologic query'
+      type: str
+      default: '"%Y-%m-%dT%H:%M:%S.%6N"'
+sources:
+  list_all_datatypes:
+    description: Summary of all events by sourceCategory
+    metadata:
+      data_families: [SumologicGeneral]
+    args:
+      query: '*
+      | format(_messagetime, "yyyy-MM-ddTHH:mm:ss") as date
+      | first(date), last(date) by _sourceCategory
+      | count _sourceCategory
+      | sort -_count
+      '
+    parameters:
