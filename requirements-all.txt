@@ -18,7 +18,7 @@ dnspython<=2.0.0 # <=2.0 required by ipwhois
 folium>=0.9.0
 geoip2>=2.9.0
 html5lib  # req by pandas for scraping
-idna<3 # req < 3 from requests
+idna<4 # req < 3 from requests
 ipwhois>=1.1.0
 ipython>=7.1.1
 ipywidgets>=7.4.2

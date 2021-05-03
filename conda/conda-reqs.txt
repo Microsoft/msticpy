@@ -7,7 +7,7 @@ cryptography>=3.1
 deprecated>=1.2.4
 dnspython<=2.0.0
 folium>=0.9.0
-idna<3  # req < 3 from requests
+idna<4  # req < 3 from requests
 ipython>=7.1.1
 ipywidgets>=7.4.2
 keyring>=13.2.1
