@@ -27,7 +27,7 @@ KqlmagicCustom[jupyter-basic,auth_code_clipboard]>=0.1.114.dev26
 KqlmagicCustom[jupyter-extended]>=0.1.114.dev25
 lxml
 matplotlib>=3.0.0
-moz_sql_parser>=4.5.0,<=4.11.21016
+moz_sql_parser>=4.5.0,<4.40.21127
 msrest>=0.6.0
 msrestazure>=0.6.0
 nest_asyncio>=1.4.0

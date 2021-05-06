@@ -11,6 +11,6 @@ geoip2>=2.9.0
 html5lib
 ipwhois>=1.1.0
 KqlmagicCustom[jupyter-basic,auth_code_clipboard]>=0.1.114.dev26
-moz_sql_parser>=4.5.0,<=4.11.21016
+moz_sql_parser>=4.5.0,<4.40.21127
 splunk-sdk>=1.6.0
 tldextract>=2.2.2
