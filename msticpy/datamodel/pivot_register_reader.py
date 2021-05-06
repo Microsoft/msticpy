@@ -156,6 +156,9 @@ def _add_func_to_entities(func, piv_reg, container, **kwargs):
         func_name = piv_reg.func_new_name or piv_reg.src_func_name
         setattr(query_container, func_name, pivot_func)
 
+        if piv_reg.create_shortcut:
+            setattr(entity, func_name, pivot_func)
+
         if "debug" in kwargs:
             print(
                 entity_name,

@@ -30,7 +30,7 @@ run on the IpAddress entity in the "util" group.
     asn  asn_cidr  asn_country_code  asn_date    asn_description  asn_registry  nets .....
     NA   NA        US                2015-04-01  NA               arin          [{'cidr': '157.53.0.0/16'...
 
-    >>> IpAddress.util.geoloc_mm(value="157.53.1.1"))
+    >>> IpAddress.util.geoloc(value="157.53.1.1"))
     CountryCode  CountryName    State   City   Longitude   Latitude   Asn...
     US           United States  None    None   -97.822     37.751     None...
 
@@ -131,20 +131,22 @@ Jupyter notebooks.
 Getting started
 ---------------
 
+The pivoting library depends on a number of data providers and other
+functions defined in
+*MSTICPy*. These normally need to be loaded and initialized before starting
+the Pivot library.
+
+1. Load *MSTICPy*
+~~~~~~~~~~~~~~~~~
+
 .. code:: ipython3
 
     from msticpy.nbtools.nbinit import init_notebook
     init_notebook(namespace=globals());
 
 
-The pivoting library depends on a number of data providers used in
-*MSTICPy*. These normally need to be loaded and initialized before starting
-the Pivot library.
-
-This is mandatory for data query providers such as the AzureSentinel,
-Splunk or MDE data providers. These usually need initialization and
-authentication steps to load query definitions and connect to the
-service.
+2. Load one or more data providers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can create as many data providers (for different data
 backends) as you need - pivot will search all of them for usable
@@ -157,22 +159,33 @@ queries.
    to the pivot functions unless you authenticate/connect prior to creating
    the new Pivot object (or create a new Pivot object).
 
-You don't have to load providers such as Threat Intelligence (TILookup)
+.. warning:: If you are working with multiple Azure Sentinel workspaces,
+   Pivot does not create multiple instances of pivot query functions for
+   each workspace. To switch workspaces, use the ``QueryProvider.connect()``
+   function to switch to your desired workspace. Pivot query functions
+   will now be executed against that workspace. If you have a need to
+   query multiple workspaces, let us know and we will try to implement
+   simultaneous workspace pivots.
+
+You don't have to explicity load providers such as Threat Intelligence (TILookup)
 and GeoIP. If you do not initialize these before starting Pivot they
 will be loaded with the defaults as specified in your
 *msticpyconfig.yaml*. If you want to use a specific configuration for
 any of these, you should load and configure them before starting Pivot.
-
-Load one or more data providers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: ipython3
 
     az_provider = QueryProvider("AzureSentinel")
 
 
-Initialize the Pivot library
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3. Initialize the Pivot library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+See the next section.
+
+
+Initializing the Pivot library
+------------------------------
 
 You can either pass an explicit list of providers to Pivot or let it
 look for them in the notebook global namespace. In the latter case, the
@@ -183,29 +196,6 @@ If you have data providers loaded that you do not want
 Pivot to use, pass an explicit list of provider objects when initializing
 the Pivot class. For more details see
 :py:mod:`Pivot<msticpy.datamodel.pivot>`.
-
-What happens at initialization?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
--  Any instantiated data providers are searched for relevant queries.
-   Any queries found are added to the approriate entity or entities.
--  The TILookup provider is loaded and entity-specific lookups (e.g. IP, Url,
-   File) are added as pivot functions
--  Miscellaneous *MSTICPy* functions and classes (e.g. GeoIP, IpType,
-   Domain utils) are added as pivot functions to the appropriate entity.
--  A default time range is set - this is only used by queries executed
-   as pivot functions and covered later in `Data query pivot functions`_
-
-You can add additional functions as pivot functions by creating a
-registration template and importing the function. Details of this are
-covered later in the document.
-
-Pivot function list
-~~~~~~~~~~~~~~~~~~~
-
-
-Initializing the Pivot library
-------------------------------
 
 You will usually see some output as provider libraries are loaded.
 
@@ -219,8 +209,26 @@ You will usually see some output as provider libraries are loaded.
    you normally don’t need to do so. You can access the current Pivot
    instance using the class attribute ``Pivot.current``
 
-See the list of providers loaded by the Pivot class
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+What happens at initialization?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  Any instantiated data providers are searched for relevant queries.
+   Any queries found are added to the approriate entity or entities.
+-  The TILookup provider is loaded and entity-specific lookups (e.g. IP, Url,
+   File) are added as pivot functions
+-  Miscellaneous *MSTICPy* functions and classes (e.g. GeoIP, IpType,
+   Domain utils) are added as pivot functions to the appropriate entity.
+-  A default time range is set - this is only used by queries executed
+   as pivot functions and covered later in `Data query pivot functions`_
+
+You can add additional functions as pivot functions by creating a
+registration template and importing the function. Details of this are
+covered later in `Customizing and managing Pivots`_.
+
+
+View the list of providers loaded by the Pivot class
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Notice that TILookup was loaded even though we did not create an
 instance of TILookup beforehand.
@@ -252,39 +260,73 @@ After loading the Pivot class, entities have pivot functions added to them
 
     Host pivot functions
 
-    ['AzureSentinel.list_related_alerts',
-     'AzureSentinel.az_net_analytics',
-     'AzureSentinel.get_info_by_hostname',
-     'AzureSentinel.auditd_all',
-     'AzureSentinel.sudo_activity',
-     'AzureSentinel.cron_activity',
-     ...
-     'AzureSentinel.get_process_tree',
-     'AzureSentinel.get_parent_process',
-     'AzureSentinel.list_processes_in_session',
-     'util.dns_validate_tld',
-     'util.dns_is_resolvable',
-     'util.dns_in_abuse_list']
+    ['AzureSentinel.alerts',
+    'AzureSentinel.aznet_interface',
+    'AzureSentinel.aznet_net_flows',
+    'AzureSentinel.aznet_net_flows_depr',
+    'AzureSentinel.azsent_bookmarks',
+    'AzureSentinel.hb_heartbeat',
+    ...
+    'AzureSentinel.lxsys_squid_activity',
+    'AzureSentinel.lxsys_sudo_activity',
+    'AzureSentinel.lxsys_user_group_activity',
+    'AzureSentinel.lxsys_user_logon',
+    ...
+    'AzureSentinel.wevt_logons',
+    'AzureSentinel.wevt_parent_process',
+    'AzureSentinel.wevt_process_session',
+    'AzureSentinel.wevt_processes',
+    'dns_is_resolvable',
+    'dns_resolve',
+    'qry_alerts',
+    'qry_aznet_interface',
+    'qry_aznet_net_flows',
+    'qry_azsent_bookmarks',
+    ...
+    'qry_wevt_all_events',
+    'qry_wevt_events_by_id',
+    'qry_wevt_logon_attempts',
+    'qry_wevt_logon_failures',
+    ...
+    'util.dns_in_abuse_list',
+    'util.dns_is_resolvable',
+    'util.dns_resolve',
+    'util.dns_validate_tld']
 
     IpAddress pivot functions
 
-    ['AzureSentinel.list_alerts_for_ip',
-     'AzureSentinel.list_aad_signins_for_ip',
-     'AzureSentinel.list_azure_activity_for_ip',
-     'AzureSentinel.list_azure_network_flows_by_ip',
-     'AzureSentinel.list_activity_for_ip',
-     ...
-     'AzureSentinel.list_indicators_by_url',
-     'util.whois',
-     'util.ip_type',
-     'util.geoloc_mm',
-     'util.geoloc_ips',
-     'ti.lookup_ip',
-     ...
-     'ti.lookup_ipv4_VirusTotal',
-     'ti.lookup_ipv4_XForce',
-     'ti.lookup_ipv6',
-     'ti.lookup_ipv6_OTX']
+    ['AzureSentinel.hb_heartbeat',
+    'AzureSentinel.hb_heartbeat_for_ip_depr',
+    'AzureSentinel.list_alerts_for_ip',
+    ...
+    'geoloc',
+    'ip_type',
+    'qry_aad_signins',
+    'qry_az_activity',
+    ...
+    'ti.lookup_ipv4_VirusTotal',
+    'ti.lookup_ipv4_XForce',
+    ...
+    'tilookup_ip',
+    'tilookup_ipv4',
+    'tilookup_ipv6',
+    'util.geoloc',]
+
+
+Reloading Pivots
+^^^^^^^^^^^^^^^^
+If you need to refresh the pivot functions because, for example, you loaded
+a query provider after initializing the Pivot library you can call
+:py:meth:`reload_pivots<msticpy.datamodel.pivot.Pivot.reload_pivots>`.
+This takes the same ``namespace`` and ``providers`` parameters as when
+initializing the class.
+You can also acheive the same thing by creating a new instance of the
+Pivot class.
+
+.. note:: Reloading will remove previously attached pivot functions.
+   This is usually a safe operation since these can be dynamically
+   created at any time. If you don't want to remove existing functions
+   use the ``no_clear=True`` parameter to ``reload_pivots``.
 
 
 Discovering entity names
@@ -298,11 +340,13 @@ can use that to verify the name of an entity.
     entities.find_entity("dns")
 
 .. parsed-literal::
+
     Match found 'Dns'
 
     msticpy.datamodel.entities.dns.Dns
 
-If a unique match is found the entity class is returned.
+If a unique match is found the entity class is returned. Otherwise,
+we try to suggest possible matches for the entity name.
 
 .. code:: ipython3
 
@@ -312,7 +356,6 @@ If a unique match is found the entity class is returned.
 
     No exact match found for 'azure'.
     Closest matches are 'AzureResource', 'Url', 'Malware'
-
 
 
 Pivot functions are grouped into containers
@@ -364,13 +407,47 @@ Containers are also iterable - each iteration returns a tuple
 In notebooks/IPython you can also use tab completion to get to the right
 function.
 
+Shortcut pivot functions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A subset of many regularly-used pivot functions are also added
+as "shortcuts" to the entities. These are not in containers but
+available as direct methods on the entity classes and entity instances.
+A shortcut is just a reference or pointer to a pivot function in
+one of the containers described in the previous section.
+
+Because the shortcut methods behave as *instance* methods they can take input
+values from the entity attributes directly. In this example, the input to
+the ``ip_type`` function is automatically taken from the ``Address``
+attribute of the IP entity.
+
+.. code:: ipython3
+
+    >>> ip = IpAddress(Address="192.168.1.1")
+    >>> ip.ip_type()
+    ip          result
+    192.168.1.1 Private
+
+These shortcuts otherwise work in the same way as the pivot functions
+described in the rest of the document. In the previous example showing
+pivot functions with the ``get_pivot_list()`` function, the shortcut
+versions of the pivot functions appear without a "." in the name.
+
+To help you navigate which shortcut does what, data query shortcuts are prefixed
+with "qry\_" and threat intelligence lookups with "ti\_".
+
+You can create your own shortcut methods to existing or custom pivot functions
+as described in `Creating and deleting shortcut pivot functions`_.
+
+
 Using the Pivot Browser
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Pivot also has a utility that allows you to browse entities and the
 pivot functions attached to them. You can search for functions with
 desired keywords, view help for the specific function and copy the function
-signature to paste into a code cell.
+signature to paste into a code cell. Both fully-qualified pivot functions
+and shortcut equivalents are shown in the browser.
 
 .. code:: ipython3
 
@@ -448,7 +525,7 @@ There are a few variations in the way you can specify parameters:
 
 -  Positional parameter - If the function only accepts one parameter you
    can usually just supply it without a name - as a *positional parameter*
-   (see first and third examples below)
+   (see first and third examples in the code sample in the next section)
 -  Native parameter - You can also use the native parameter name -
    i.e. the name that the underlying function expects and that will be
    shown in the ``help(function)`` output. (second example below)
@@ -479,7 +556,7 @@ Some examples of simple pivot functions for an IpAddress string.
     display(IpAddress.util.ip_type("10.1.1.1"))
     display(IpAddress.util.ip_type(ip_str="157.53.1.1"))
     display(IpAddress.util.whois("157.53.1.1"))
-    display(IpAddress.util.geoloc_mm(value="157.53.1.1"))
+    display(IpAddress.util.geoloc(value="157.53.1.1"))
 
 
 ========  ========
@@ -507,7 +584,6 @@ US             United States                       -97.822      37.751         s
 =============  =============  =======  ======  ===========  ==========  =====  =======  ===========  ================  ===========
 
 
-
 Using an entity as a parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -527,10 +603,33 @@ values. Then we supply these entities as parameters to the pivot functions.
     display(IpAddress.util.ip_type(ip1))
     display(IpAddress.util.ip_type(ip2))
     display(IpAddress.util.whois(ip2))
-    display(IpAddress.util.geoloc_mm(ip2))
+    display(IpAddress.util.geoloc(ip2))
 
 The output is the same as the previous example
 `Using single value parameters as input`_
+
+
+For shortcut functions you can also use the entity instance to
+provide the input value:
+
+.. code:: ipython3
+
+    ip_1 = IpAddress(Address="10.1.1.1")
+    ip_2 = IpAddress(Address="157.53.1.1")
+    display(ip_1.ip_type())
+    display(ip_2.whois())
+
+========  ========
+ip        result
+========  ========
+10.1.1.1  Private
+========  ========
+
+===========  ================  =========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+ip_column    AsnDescription    whois_result
+===========  ================  =========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+157.53.1.1   NA                {'nir': None, 'asn_registry': 'arin', 'asn': 'NA', 'asn_cidr': 'NA', 'asn_country_code': 'US', 'asn_date': '2015-04-01', 'asn_description': 'NA', 'query': '157.53.1.1', 'nets': [{'cidr': '157.53.0.0/16', 'name': 'NETACTUATE-MDN-04', 'handle': 'NET-157-53-0-0-1', 'range': '157.53.0.0 - 157.53.255.255', 'description': 'NetActuate, Inc', 'country': 'US', 'state': 'NC', 'city': 'Raleigh', 'address': 'PO Box 10713', 'postal_code': '27605', 'emails': ['ops@netactuate.com', 'abuse@netactuate.com'], 'created': '2015-04-01', 'updated': '2016-10-25'}], 'raw': None, 'referral': None, 'raw_referral': None}
+===========  ================  =========================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 
 
@@ -563,7 +662,7 @@ collating the results to hand you back a single dataframe.
    that will not work with iterable or dataframe input.
 
 Similarly, where the function expects a dataframe or iterable as an
-input you can supply a simple string value and the pivot interface
+input, you can supply a simple string value and the pivot interface
 will convert to the expected input type (in this case a single-column,
 single-row DataFrame).
 
@@ -604,7 +703,7 @@ but now with list inputs.
     display(IpAddress.util.ip_type(ip_list1))
     display(IpAddress.util.ip_type(ip_str=list(ip_list1)))
     display(IpAddress.util.whois(value=tuple(ip_list1)))
-    display(IpAddress.util.geoloc_mm(ip_list1))
+    display(IpAddress.util.geoloc(ip_list1))
 
 
 ===============  ========
@@ -675,7 +774,7 @@ Examples showing the same pivot functions with dataframe inputs.
     display(IpAddress.util.ip_type(data=ip_df1, input_col="AllExtIPs"))
     display(IpAddress.util.ip_type(data=ip_df1, ip="AllExtIPs"))
     display(IpAddress.util.whois(data=ip_df1, column="AllExtIPs"))
-    display(IpAddress.util.geoloc_mm(data=ip_df1, src_col="AllExtIPs"))
+    display(IpAddress.util.geoloc(data=ip_df1, src_col="AllExtIPs"))
 
 
 Output is the same as `Using a list (or other iterable) as a parameter`_
@@ -693,13 +792,15 @@ can send to a pivot function.
 
     from msticpy.datamodel import txt_df_magic
 
-Here, we paste in the text into a cell, add the cell magic at the
-top of the cell with parameters
+Here, we paste in the text into a cell, add the cell magic ``%%txt2df``
+at the top of the cell with parameters
 telling it that the first row is a head row and that we want it to
 create a named pandas DataFrame in the notebook global namespace.
 (This just means that when you execute this cell it will create
 a DataFrame variable named "ip_df1" that you can use in subsequent
 cells).
+
+Use ``%%txt2df --help`` to see the supported usage.
 
 .. code:: ipython3
 
@@ -728,7 +829,8 @@ Joining input to output data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You might want to return a data set that is joined to your input set. To
-do that use the “join” parameter.
+do that use the “join” parameter. Join works with all types of inputs:
+value, list or DataFrame.
 
 The value of join can be one of the following:
 
@@ -741,12 +843,12 @@ To preserve all rows from the input, use a “left” join. To keep only
 rows that have a valid result from the function use “inner” or “right”
 
    Note while most functions only return a single output row for each
-   input row some return multiple rows. Be cautious using “outer” in
+   input row, some return multiple rows. Be cautious using “outer” in
    these cases.
 
 .. code:: ipython3
 
-    display(IpAddress.util.geoloc_mm(data=ip_df1, src_col="AllExtIPs", join="left"))
+    display(IpAddress.util.geoloc(data=ip_df1, src_col="AllExtIPs", join="left"))
 
 
 =============  =============  =============  ========  ==========  ===========  ==========  =====  =======  ===========  ================  =============
@@ -759,7 +861,24 @@ AllExtIPs      CountryCode    CountryName    State     City          Longitude  
 65.55.44.108   US             United States  Virginia  Boydton        -78.375      36.6534         set()    geolocation  {}                65.55.44.108
 =============  =============  =============  ========  ==========  ===========  ==========  =====  =======  ===========  ================  =============
 
+By default, the pivot functions will infer the join keys for input and output data
+from the function definitions and parameters.
 
+For advanced use, you can override the default behavior of joining on
+inferred join keys by specifying ``left_on`` and ``right_on`` parameters.
+The ``left_on`` parameter is typically the input parameter name and
+``right_on`` is a column in the output DataFrame (the pivot results).
+Usually, you won't need to use this flexibility.
+
+The join operation also supports a ``join_ignore_case`` parameter.
+This lets you join text columns ignoring case differences. This can
+be helpful with data like hash strings and domain names, which are
+case insensitive and can be represented differently.
+
+.. warning:: using ``join_ignore_case`` does add a performance
+   overhead since normalized case columns need to be created for both
+   input and output data sets before the join takes place.
+   This might be a significant overhead on larger data sets.
 
 Data query pivot functions
 --------------------------
@@ -789,10 +908,6 @@ source_ip_list     IpAddress         Address
 ip_address_list    IpAddress         Address
 ip_address         IpAddress         Address
 user               Account           Name
-observables        IpAddress         Address
-                   Dns               DomainName
-                   File              file_hash
-                   Url               Url
 logon_session_id   Process           LogonSession
                    HostLogonSession  SessionId
                    Account           LogonId
@@ -800,6 +915,8 @@ process_id         Process           ProcessId
 commandline        Process           CommandLine
 url                Url               Url
 file_hash          File              file_hash
+domain             Dns               DomainName
+resource_id        AzureResource     ResourceId
 =================  ================  ===================
 
 If you have existing queries that use different names than those
@@ -940,8 +1057,9 @@ What data queries do we have?
 This will vary for each Entity type (many entity types have no
 data queries).
 
-For each entity type you can execute the container object
-corresponding to the data provider that you want to view.
+For each entity type, you can execute the container object
+corresponding to the data provider that you want to view. Shortcut
+query functions are also displayed with a "qry\_" prefix.
 
 .. code:: ipython3
 
@@ -950,20 +1068,28 @@ corresponding to the data provider that you want to view.
 
 .. parsed-literal::
 
-    list_related_alerts function
-    az_net_analytics function
-    get_info_by_hostname function
-    auditd_all function
-    sudo_activity function
+    alerts function
+    azsent_bookmarks function
+    aznet_net_flows_depr function
+    aznet_interface function
+    hb_heartbeat function
+    aznet_net_flows function
+    hb_heartbeat_for_host_depr function
+    lxaud_auditd_all function
     ...
-    get_parent_process function
-    list_processes_in_session function
+    lxsys_user_logon function
+    lxsys_logons function
+    lxsys_logon_failures function
+    wevt_all_events function
+    wevt_events_by_id function
+    wevt_list_other_events function
+    wevt_logon_session function
 
 
 .. code:: ipython3
 
     host = Host(HostName="VictimPc")
-    Host.AzureSentinel.get_heartbeat_for_host(host)
+    Host.AzureSentinel.hb_heartbeat(host)
 
 
 ==============  ================================  =============  ======================  ============  ========  ================  ================  =============
@@ -974,9 +1100,10 @@ OpsManager      2020-12-02 20:24:59.613000+00:00  13.89.108.248  VictimPc.Contos
 
 .. note:: some columns have been removed for brevity
 
+
 .. code:: ipython3
 
-    Host.AzureSentinel.list_host_logons(host_name="VictimPc").head()
+    Host.AzureSentinel.wevt_logons(host_name="VictimPc").head()
 
 
 ===================  =========  ================================  ======================  =================  ===================  ================  ================  ==================  ==============================================  ===============
@@ -989,6 +1116,30 @@ CONTOSO\RonHD             4624  2020-10-01 22:40:00.957000+00:00  VictimPc.Conto
 NT AUTHORITY\SYSTEM       4624  2020-10-01 22:40:14.040000+00:00  VictimPc.Contoso.Azure  VictimPc$          CONTOSO              S-1-5-18          SYSTEM            NT AUTHORITY        S-1-5-18                                        0x3e7
 ===================  =========  ================================  ======================  =================  ===================  ================  ================  ==================  ==============================================  ===============
 
+
+Query prefixes
+~~~~~~~~~~~~~~
+
+The queries are usually prefixed by a short string indicating the
+data table (or data source) targeted by the query. This is to help
+disambiguate the query functions and keep the overall function
+name manageably short.
+
+Some commonly used prefixes are:
+
+=========  =====================================================
+Prefix     Data source
+=========  =====================================================
+azsent     Azure Sentinel data queries (e.g. bookmarks)
+aznet      Azure network analytics
+aad        Azure Active Directory
+az         Other Azure
+hb         OMS Heartbeat table
+lxsys      Linux Syslog
+lxaud      Linux auditd
+o365       Office 365 activity
+wevt       Windows security events
+=========  =====================================================
 
 
 Using additional parameters
@@ -1238,10 +1389,22 @@ also join it to the output. By default, it uses the index of the input
 rows to join to the output. This usually works well unless the input
 index has duplicate values.
 
-You can override the default behavior of joining on the index by
+Index joining may not work if the query parameter are "list" types
+(e.g. some queries accept parameters that are a sequence of values).
+In these cases, you can override the default joining behavior by
 specifying ``left_on`` and ``right_on`` column names. The ``left_on``
 column name must be a column in the input DataFrame and ``right_on``
-must specify a column in the output DataFrame (the query results).
+must be a column in the output DataFrame (the query results).
+
+The join operation also supports a ``join_ignore_case`` parameter.
+This lets you join text columns ignoring case differences. This can
+be helpful with data like hash strings and domain names, which are
+case insensitive and can be represented differently.
+
+.. warning:: using ``join_ignore_case`` does add a performance
+   overhead since normalized case columns need to be created from
+   the data before the join takes place. This might be noticable
+   on larger data sets.
 
 Threat Intelligence lookups
 ---------------------------
@@ -1416,6 +1579,7 @@ variables, so why have them?
 
 To make building these types of pipelines easier with pivot functions
 we've implemented some pandas helper functions.
+
 These are available in the
 :py:class:`mp_pivot<msticpy.datamodel.pivot_pd_accessor.PivotAccessor>`
 property of pandas DataFrames, once Pivot is imported.
@@ -1479,7 +1643,17 @@ in the pivot function.
     .mp_pivot.run(IpAddress.util.whois, column="Ioc", join="inner")
 
 
-There are also a couple of additional convenience functions.
+``mp_pivot.run()`` also supports a couple of parameters to help with
+debugging or simply to have something interesting to watch while
+your pipeline executes. ``verbose`` will print out the number of rows
+returned from the ``run`` function. This is useful to spot which
+item was responsible for your long and ultimate empty pipeline.
+``debug`` add a few more details like a list of columns returned in
+the data and the execution time of the run function.
+
+
+
+There are also a few convenience functions.
 
 .. note:: These second two functions only work in an IPython/Jupyter environment.
 
@@ -1550,6 +1724,91 @@ data to pass through unchanged but will also send
 a snapshot of the data at that point in the pipeline to the named function.
 You can also pass arbitrary other named arguments to the `tee_exec`. These
 will be passed to the ``df_func`` function.
+
+
+The next three methods are simple helper functions that duplicate a subset
+of the pandas functionality. The syntax is probably more user-friendly
+than the pandas equivalents but not as powerful and, in some cases, potentially
+much less performant.
+
+mp_pivot.filter
+~~~~~~~~~~~~~~~
+
+:py:meth:`mp_pivot.filter<msticpy.datamodel.pivot_pd_accessor.PivotAccessor.filter>`
+is a simple text or regular expression filter that matches and returns
+only rows with the specified patterns. If you know the exact columns that
+you need to filter on, and particularly if the dataset is large, you should
+use pandas native query functions like ``query`` or boolean filtering.
+However, the filter accessor can be useful for quick and dirty uses.
+
+The ``expr`` parameter can be a string, a regular expression or a number. In
+the former two cases the expression is matched against all string (or pandas object)
+columns. The matching is not case-sensitive by default but you can force this
+by specifying ``match_case=True``.
+
+If ``expr`` is a number, it is matched against numeric columns. However, it is matched
+as a string. The value of the ``expr`` parameter is converted to a string and all
+of the DataFrame columns of type "number" are converted to strings. Any row
+with a number that partially matches will be returned. For example, ``expr=462`` will
+match 4624 and 4625 from the numeric EventID columns in Windows Security event
+data.
+
+You can also specify a regular expression string to match numeric columns by
+adding the ``numeric_col=True`` parameter. Using ``expr="462[4-7]", numeric_col=True``
+will match numbers in the range 4624-4627.
+
+mp_pivot.filter_cols
+~~~~~~~~~~~~~~~~~~~~
+
+:py:meth:`mp_pivot.filter_cols<msticpy.datamodel.pivot_pd_accessor.PivotAccessor.filter_cols>`
+lets you filter the columns in the pipeline.
+
+The ``cols`` parameter can be a string (single column) or a list of strings (multiple
+columns). Each item can also be a regular expression to let you match groups of
+related column names (e.g. "Target.*").
+
+The ``match_case`` parameter (False by default) forces case-sensitve matching on
+exact or regular expression matching of column names.
+
+The ``sort_columns`` parameter will sort the columns alphabetically in the
+output DataFrame - the default is to preserve the input column order.
+
+mp_pivot.sort
+~~~~~~~~~~~~~
+
+:py:meth:`mp_pivot.sort<msticpy.datamodel.pivot_pd_accessor.PivotAccessor.sort>`
+lets you sort the output DataFrame by one or more columns.
+
+The ``cols`` parameter specifies which columns to sort by. This can be a single
+column name, a string containing a comma-separated list of column names, a
+Python list of column names or a Python dictionary of column_name-boolean pairs.
+
+Column names are matched in the following sequence:
+
+-  exact matches
+-  case-insensivitve matches
+-  regular expressions
+
+Where a column regular expression matches more than one column, all matched
+columns will be added to the column sorting order.
+
+In the case of the string and list types you can add a ":desc" or ":asc" suffix
+to the name (no spaces) to indicated descending or ascending sort order.
+Ascending is the default so you typically do not need to add the ":asc" suffix
+except for reasons of clarity.
+
+You can also control the sorting behavior of individual columns by passing
+a dict as the ``cols`` parameter. The keys of the dict are the column names
+and the value is a boolean: True means ascending, False means descending.
+
+Column sorting priority is controlled by the order in which you specify
+the column names/expressions in the ``cols`` parameter. E.g.
+``cols="colA:desc, colB:asc"`` will sort by colA descending, then by colB, ascending.
+
+You can also force a single ordering for all columns with the ``ascending``
+parameter - this will override any column-specific settings.
+
+
 
 Example pipeline
 ~~~~~~~~~~~~~~~~
@@ -1750,8 +2009,11 @@ Optionally, you can add ``verbose=True`` which will cause a progress bar
 and step details to be displayed as the pipeline is executed.
 
 
+Customizing and managing Pivots
+-------------------------------
+
 Adding custom functions to the pivot interface
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The pivot library supports adding functions as pivot functions from
 any importable Python library. Not all functions will be wrappable.
@@ -1940,3 +2202,56 @@ pivot registration parameters as keyword arguments:
         func_input_value_arg="input",
         func_new_name="upper_name",
     )
+
+
+Creating and deleting shortcut pivot functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are adding pivot functions of your own, you can add shortcuts
+(i.e. direct methods of the entity, rather than methods in sub-containers)
+to those functions.
+
+Every entity class has the class method
+:py:meth:`make_pivot_shortcut<msticpy.datamodel.entities.Entity.make_pivot_shortcut>`.
+You can use this to add a shortcut to an existing pivot function on that
+entity. Note that you must call this method on the entity *class* and not
+on an instance of that Entity.
+
+The parameters that you must supply are ``func_name`` and ``target``. The former
+is the relative path to the pivot function that you want to make the shortcut
+to, e.g. for ``IpAddress.util.whois`` you would use the string "util.whois".
+``target`` is the string name that you want the shortcut function to be called.
+This should be a valid Python identifier - a string starting with a letter or
+underscore, followed by any combination of letters, digits and underscores. If
+you supply a string that is not a valid identifier, the function will try to
+transform it into one.
+
+.. code:: ipython3
+
+    >>> IpAddress.make_pivot_shortcut(func_name="util.whois", target="my_whois")
+    >>> IpAddress.my_whois("157.53.1.1")
+
+.. parsed-literal::
+
+    ip_column    AsnDescription    whois_result
+    157.53.1.1   NA                {'nir': None, 'asn_registry': 'arin', ...
+
+
+If the shortcut function already exists, you will get an error (AttributeError).
+You can force overwriting of an existing shortcut by adding ``overwrite=True``.
+
+To delete a shortcut use
+:py:meth:`del_pivot_shortcut<msticpy.datamodel.entities.Entity.del_pivot_shortcut>`,
+giving the single parameter ``func_name`` with the name of the shortcut function
+you want to remove.
+
+
+Removing pivot functions from an entity or all entities
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Although not a common operation you can remove *all* pivot functions
+from an entity or from all entities.
+
+See
+:py:meth:`remove_pivot_funcs<msticpy.datamodel.pivot.Pivot.remove_pivot_funcs>`
+for more details.

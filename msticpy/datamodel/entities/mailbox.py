@@ -3,12 +3,12 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 # --------------------------------------------------------------------------
-"""GeoLocation Entity class."""
+"""Mailbox Entity class."""
 from typing import Any, Mapping, Optional
 
 from ..._version import VERSION
 from ...common.utility import export
-from .entity import ContextObject, Entity
+from .entity import Entity
 
 __version__ = VERSION
 __author__ = "Ian Hellen"
@@ -18,30 +18,26 @@ __author__ = "Ian Hellen"
 
 
 @export
-class GeoLocation(Entity, ContextObject):
+class Mailbox(Entity):
     """
-    GeoLocation class.
+    Mailbox Entity class.
 
     Attributes
     ----------
-    CountryCode : str
-        GeoLocation CountryCode
-    CountryName : str
-        GeoLocation CountryName
-    State : str
-        GeoLocation State
-    City : str
-        GeoLocation City
-    Longitude : float
-        GeoLocation Longitude
-    Latitude : float
-        GeoLocation Latitude
-    Asn : str
-        GeoLocation Asn
+    MailboxPrimaryAddress : str
+        PrimaryAddress of the Mailbox
+    DisplayName : str
+        DisplayName of the Mailbox
+    Upn : str
+        Upn of the Mailbox
+    ExternalDirectoryObjectId : str
+        ExternalDirectoryObjectId of the Mailbox
+    RiskLevel : str
+        RiskLevel of the Mailbox
 
     """
 
-    ID_PROPERTIES = ["Longitude", "Latitude", "City", "State", "CountryCode"]
+    ID_PROPERTIES = ["MailboxPrimaryAddress"]
 
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
@@ -61,33 +57,23 @@ class GeoLocation(Entity, ContextObject):
             kw arguments.
 
         """
-        self.CountryCode: Optional[str] = None
-        self.CountryName: Optional[str] = None
-        self.State: Optional[str] = None
-        self.City: Optional[str] = None
-        self.Longitude: Optional[str] = None
-        self.Latitude: Optional[str] = None
-        self.Asn: Optional[str] = None
+        self.MailboxPrimaryAddress: Optional[str] = None
+        self.DisplayName: Optional[str] = None
+        self.Upn: Optional[str] = None
+        self.ExternalDirectoryObjectId: Optional[str] = None
+        self.RiskLevel: Optional[str] = None
+
         super().__init__(src_entity=src_entity, **kwargs)
 
     @property
-    def description_str(self) -> str:
+    def description_str(self):
         """Return Entity Description."""
-        return f"{self.CountryCode}; {self.State}; {self.City}"
+        return self.MailboxPrimaryAddress or self.__class__.__name__
 
     _entity_schema = {
-        # str
-        "CountryCode": None,
-        # str
-        "CountryName": None,
-        # str
-        "State": None,
-        # str
-        "City": None,
-        # double?
-        "Longitude": None,
-        # double?
-        "Latitude": None,
-        # int
-        "Asn": None,
+        "MailboxPrimaryAddress": None,
+        "DisplayName": None,
+        "Upn": None,
+        "ExternalDirectoryObjectId": None,
+        "RiskLevel": None,
     }

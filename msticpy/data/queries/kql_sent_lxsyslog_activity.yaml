@@ -7,6 +7,9 @@ metadata:
 defaults:
   metadata:
     data_source: 'linux_syslog'
+    pivot:
+      direct_func_entities:
+        - Host
   parameters:
       table:
         description: Table name

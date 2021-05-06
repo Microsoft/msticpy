@@ -168,7 +168,7 @@ correctly. The results of the validation are shown in a text view box.
 Close this when you are done with the **Close** button.
 
 There is also help for the settings available on each tab, with links
-to more detailed documenation.
+to more detailed documentation.
 
 .. figure:: _static/settings_help.png
    :alt: Displaying help in the configuration editor
@@ -346,7 +346,7 @@ Click the **Save File** button to save your changes.
 Test that the TI settings work
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This assumes that you have set an enviroment variable pointed at your
+This assumes that you have set an environment variable pointed at your
 ``msticpyconfig.yaml`` or have this file in your current directory.
 Use the MpConfigFile tool to force *MSTICPy* to reload settings from the disk,
 then run a simple lookup.
@@ -524,7 +524,7 @@ Chained authentication lets you try up to four methods of authentication:
    on.
 
 To use chained authentication methods select the methods to want to use
-and leave the clientId/tenantiId/clientSecret fields empty.
+and leave the clientId/tenantId/clientSecret fields empty.
 
 Splunk
 ^^^^^^

@@ -84,7 +84,10 @@ class TimeSpan:
 
     def __repr__(self):
         """Return repr string."""
-        return f"TimeStamp(start={self.start}, end={self.end}, period={self.period})"
+        return (
+            f"{self.__class__.__name__}"
+            f"(start={self.start}, end={self.end}, period={self.period})"
+        )
 
     @property
     def start(self) -> datetime:
@@ -124,7 +127,7 @@ class TimeSpan:
 
         """
         if not self._period:
-            self._period = self.start - self.end
+            self._period = self.end - self.start
         return self._period
 
     @staticmethod

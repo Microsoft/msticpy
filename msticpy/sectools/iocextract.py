@@ -52,6 +52,7 @@ _RESULT_COLS = ["IoCType", "Observable", "SourceIndex", "Input"]
 class IoCType(Enum):
     """Enumeration of IoC Types."""
 
+    # pylint: disable=invalid-name
     unknown = "unknown"
     ipv4 = "ipv4"
     ipv6 = "ipv6"
@@ -65,6 +66,8 @@ class IoCType(Enum):
     windows_path = "windows_path"
     linux_path = "linux_path"
     hostname = "hostname"
+
+    # pylint: enable=invalid-name
 
     @classmethod
     def parse(cls, value: str) -> "IoCType":
@@ -87,6 +90,9 @@ class IoCType(Enum):
         except ValueError:
             ioc_type = IoCType.unknown
         return ioc_type
+
+
+# pylint: enable=invalid-name
 
 
 @export

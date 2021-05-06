@@ -4,16 +4,16 @@
 # license information.
 # --------------------------------------------------------------------------
 """Entity Entity class."""
-from functools import partial
 import pprint
 import typing
-from abc import ABC, abstractmethod
+from abc import ABC
+from copy import deepcopy
 from typing import Any, Dict, List, Mapping, Optional, Type, Union
 
 import networkx as nx
 
 from ..._version import VERSION
-from ...common.utility import export
+from ...common.utility import export, valid_pyname
 from .entity_enums import ENTITY_ENUMS
 from .entity_graph import Node
 
@@ -32,6 +32,8 @@ class ContextObject:
 # pylint: enable=too-few-public-methods
 
 
+# Future: replace setting entity properties in __dict__ with
+# setattr (to support attributes implemented as properties)
 @export
 class Entity(ABC, Node):
     """
@@ -42,7 +44,7 @@ class Entity(ABC, Node):
 
     ENTITY_NAME_MAP: Dict[str, type] = {}
     _entity_schema: Dict[str, Any] = {}
-    id_properties: List[str] = []
+    ID_PROPERTIES: List[str] = []
 
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
@@ -339,7 +341,7 @@ class Entity(ABC, Node):
             return self
         if not self.can_merge(other):
             raise AttributeError("Entities cannot be merged.")
-        merged = self.copy()
+        merged = deepcopy(self)
         for prop, value in other.properties.items():
             if not value:
                 continue
@@ -367,20 +369,20 @@ class Entity(ABC, Node):
             return False
 
         other_id_props = {
-            prop: value
-            for prop, value in other.properties.items()
-            if prop in self.id_properties and value
+            prop: getattr(other, prop, None)
+            for prop in other.ID_PROPERTIES
+            if getattr(other, prop, None) is not None
         }
         self_id_props = {
-            prop: value
-            for prop, value in self.properties.items()
-            if prop in self.id_properties and value
+            prop: getattr(self, prop, None)
+            for prop in self.ID_PROPERTIES
+            if getattr(self, prop, None) is not None
         }
         # Return True if there is no overlap
-        overlap = self_id_props.keys() - other_id_props.keys()
+        overlap = self_id_props.keys() | other_id_props.keys()
         if not overlap:
             return True
-        return all(self.properties[prop] == other.properties[prop] for prop in overlap)
+        return all(getattr(self, prop) == getattr(other, prop) for prop in overlap)
 
     @property
     def properties(self) -> dict:
@@ -400,7 +402,6 @@ class Entity(ABC, Node):
         }
 
     @property
-    @abstractmethod
     def description_str(self) -> str:
         """
         Return Entity Description.
@@ -542,20 +543,101 @@ class Entity(ABC, Node):
         pivots = []
         for prop in dir(cls):
             attr = getattr(cls, prop)
+            if hasattr(attr, "pivot_properties"):
+                pivots.append(prop)
+                continue
             if attr.__class__.__name__ != "QueryContainer":
                 continue
             for name, qt_attr in attr:
-                if (
-                    qt_attr.__class__.__name__ == "QueryContainer"
-                    or name.startswith("_")
-                    or isinstance(qt_attr, partial)
-                ):
-                    continue
-                pivots.append(f"{prop}.{name}")
-        return pivots
+                if hasattr(qt_attr, "pivot_properties"):
+                    pivots.append(f"{prop}.{name}")
+        return sorted(pivots)
+
+    # alias for get_pivot_list
+    pivots = get_pivot_list
 
     def list_pivot_funcs(self):
         """Print list of pivot functions assigned to entity."""
         print("\n".join(self.get_pivot_list()))
 
-    pivots = get_pivot_list
+    @classmethod
+    def make_pivot_shortcut(cls, func_name: str, target: str, overwrite: bool = False):
+        """
+        Add a shortcut to a pivot function to the class.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of source pivot function.
+        target : str
+            The shortcut name (this will be a member function of the class)
+        overwrite : bool, optional
+            Force overwrite an existing pivot function, by default False
+
+        Raises
+        ------
+        AttributeError
+            The source function does not exist
+        TypeError
+            The source function is not a pivot function.
+        TypeError
+            The target attribute exists and is not a pivot function
+        AttributeError
+            The target function exists and 'overwrite=True' was not specified.
+
+        """
+        func_path = func_name.split(".") if "." in func_name else [func_name]
+        curr_attr = cls
+        for path in func_path:
+            curr_attr = getattr(curr_attr, path, None)
+            if not curr_attr:
+                raise AttributeError(f"No function found for {func_name}")
+        if not hasattr(curr_attr, "pivot_properties"):
+            raise TypeError(f"Function {func_name} is not a Pivot function")
+        tgt_name = valid_pyname(target)
+        if tgt_name != target:
+            print(f"{target} rename to valid Python identifier {tgt_name}")
+
+        existing_attr = getattr(cls, tgt_name, None)
+        if existing_attr:
+            if not hasattr(existing_attr, "pivot_properties"):
+                raise TypeError(
+                    f"Cannot overwrite existing an attribute {tgt_name}.",
+                    "This is not a pivot function.",
+                )
+            if not overwrite:
+                raise AttributeError(
+                    f"{cls.__name__} already has an attribute {tgt_name}",
+                    "Use 'overwrite' parameter to force.",
+                )
+        setattr(cls, tgt_name, curr_attr)
+
+    @classmethod
+    def del_pivot_shortcut(cls, func_name: str):
+        """
+        Remove a pivot shortcut.
+
+        Parameters
+        ----------
+        func_name : str
+            The name of the shortcut function.
+
+        Raises
+        ------
+        AttributeError
+            The class does not have an attribute `func_name`
+        TypeError
+            The attribute to delete is not a pivot shortcut.
+
+        """
+        existing_attr = getattr(cls, func_name, None)
+        if not existing_attr:
+            raise AttributeError(
+                f"{cls.__name__} has no attribute {func_name}",
+            )
+        if not hasattr(existing_attr, "pivot_properties"):
+            raise TypeError(
+                f"Cannot delete an attribute {func_name} that isn't a pivot function.",
+                "This is not a pivot function.",
+            )
+        delattr(cls, func_name)

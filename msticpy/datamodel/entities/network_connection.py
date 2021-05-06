@@ -39,6 +39,13 @@ class NetworkConnection(Entity):
 
     """
 
+    ID_PROPERTIES = [
+        "SourceAddress",
+        "SourcePort",
+        "DestinationAddress",
+        "DestinationPort",
+    ]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.

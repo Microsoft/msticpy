@@ -5,7 +5,8 @@
 # --------------------------------------------------------------------------
 """Intake kql driver."""
 import re
-from collections import ChainMap
+
+# from collections import ChainMap
 from datetime import datetime, timedelta
 from numbers import Number
 from typing import Any, Dict, List, Optional, Tuple, Union, Callable
@@ -13,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, Callable
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse, ParserError  # type: ignore
 
+from ..common.utility import collapse_dicts
 from .._version import VERSION
 
 __version__ = VERSION
@@ -83,27 +85,36 @@ class QuerySource:
 
         """
         self.name = name
-        self._source: Dict[str, Any] = source
-        self.defaults: Dict[str, Any] = defaults
+        self._source: Dict[str, Any] = source or {}
+        self.defaults: Dict[str, Any] = defaults or {}
         self._global_metadata: Dict[str, Any] = dict(metadata) if metadata else {}
         self.query_store: Optional["QueryStore"] = None  # type: ignore  # noqa: F821
 
         # consolidate source metadata - source-specifc
         # overrides global
         # add an empty dict in case neither has defined params
-        self.metadata = ChainMap(
-            _value_or_default(self._source, "metadata", {}),
-            _value_or_default(self.defaults, "metadata", {}),
+        # self.metadata = ChainMap(
+        #     _value_or_default(self._source, "metadata", {}),
+        #     _value_or_default(self.defaults, "metadata", {}),
+        #     self._global_metadata,
+        # )
+        self.metadata = collapse_dicts(
             self._global_metadata,
+            self.defaults.get("metadata", {}),
+            self._source.get("metadata", {}),
         )
         # make ChainMap for parameters from with source
         # higher priority than default
         # add an empty dict in case neither has defined params
-        self.params = ChainMap(
-            _value_or_default(self._source, "parameters", {}),
-            _value_or_default(self.defaults, "parameters", {}),
-            # self._source.get("parameters", {}),
-            # self.defaults.get("parameters", {}),
+        # self.params = ChainMap(
+        #     _value_or_default(self._source, "parameters", {}),
+        #     _value_or_default(self.defaults, "parameters", {}),
+        #     # self._source.get("parameters", {}),
+        #     # self.defaults.get("parameters", {}),
+        # )
+        self.params = collapse_dicts(
+            self.defaults.get("parameters", {}),
+            self._source.get("parameters", {}),
         )
 
         self._query: str = self["args.query"]
@@ -443,7 +454,7 @@ class QuerySource:
             if def_value:
                 param_block.append(f"    (default value is: {def_value})")
             if "aliases" in p_props:
-                alias_list = ", ".join([f"'{alias}'" for alias in p_props["aliases"]])
+                alias_list = ", ".join(f"'{alias}'" for alias in p_props["aliases"])
                 param_block.append(f"    Aliases: {alias_list}")
         doc_string = [f"{self.description}", ""]
         return "\n".join(doc_string + param_block)

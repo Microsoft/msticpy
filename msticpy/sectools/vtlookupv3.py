@@ -1,12 +1,13 @@
 """VirusTotal v3 API."""
 import asyncio
 from enum import Enum
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 import pandas as pd
 from IPython.display import HTML, display
 
 from ..common.exceptions import MsticpyImportExtraError
+from ..common.provider_settings import get_provider_settings
 
 try:
     import vt
@@ -161,17 +162,24 @@ class VTLookupV3:
         vt_df[ColumnNames.TYPE.value] = [vt_object.type]
         return vt_df.set_index([ColumnNames.ID.value])
 
-    def __init__(self, vt_key: str):
+    def __init__(self, vt_key: Optional[str] = None):
         """
         Create a new instance of VTLookupV3 class.
 
         Parameters
         ----------
-        vt_key: str
-            VirusTotal API key
+        vt_key: str, optional
+            VirusTotal API key, if not supplied, this is read from
+            user configuration.
 
         """
-        self._vt_key = vt_key
+        if not vt_key:
+            prov_settings = get_provider_settings("TIProviders")
+            vt_settings = prov_settings.get("VirusTotal")
+            if vt_settings:
+                self._vt_key = vt_settings.args.get("AuthKey")
+        else:
+            self._vt_key = vt_key
         self._vt_client = vt.Client(apikey=vt_key)
 
     async def _lookup_ioc_async(self, observable: str, vt_type: str) -> pd.DataFrame:
@@ -196,7 +204,11 @@ class VTLookupV3:
 
         """
         if VTEntityType(vt_type) not in self._SUPPORTED_VT_TYPES:
-            raise KeyError(f"Property type {vt_type} not supported")
+            raise KeyError(
+                f"Property type {vt_type} not supported",
+                "Valid types are",
+                ", ".join(x.value for x in VTEntityType.__members__.values()),
+            )
 
         endpoint_name = self._get_endpoint_name(vt_type)
         try:
@@ -682,17 +694,30 @@ class VTLookupV3:
 
         """
         if VTEntityType(vt_type) not in self._SUPPORTED_VT_TYPES:
-            raise KeyError(f"Property type {vt_type} not supported")
+            raise KeyError(
+                f"Property type {vt_type} not supported",
+                "Valid types are",
+                ", ".join(x.value for x in VTEntityType.__members__.values()),
+            )
 
         endpoint_name = self._get_endpoint_name(vt_type)
         try:
             response: vt.object.Object = self._vt_client.get_object(
                 f"/{endpoint_name}/{vt_id}"
             )
-            return pd.DataFrame(data=response.to_dict()).drop(columns=["id", "type"])
+            return _ts_to_pydate(
+                pd.DataFrame(data=response.to_dict()).drop(columns=["id", "type"])
+            )
         except vt.APIError as err:
             raise MsticpyVTNoDataError(
                 "An error occurred requesting data from VirusTotal"
             ) from err
         finally:
             self._vt_client.close()
+
+
+def _ts_to_pydate(data):
+    """Replace Unix timestamps in VT data with Py/pandas Timestamp."""
+    for date_col in (col for col in data.columns if col.endswith("_date")):
+        data[date_col] = pd.to_datetime(data[date_col], unit="s", utc=True)
+    return data

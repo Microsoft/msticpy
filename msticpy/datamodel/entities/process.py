@@ -51,6 +51,8 @@ class Process(Entity):
 
     """
 
+    ID_PROPERTIES = ["ProcessId", "ImageFile", "CreationTimeUtc", "CommandLine"]
+
     def __init__(
         self,
         src_entity: Mapping[str, Any] = None,
@@ -162,7 +164,7 @@ class Process(Entity):
         """Return Entity Description."""
         if self.ProcessFilePath:
             return f"{self.ProcessFilePath}: {self.CommandLine}"
-        return self.__name__
+        return self.__class__.__name__
 
     _entity_schema = {
         # ProcessId (type System.String)

@@ -710,7 +710,11 @@ def _create_data_grouping(data, source_columns, time_column, group_by, color):
 
 def _create_dict_from_grouping(data, source_columns, time_column, group_by, color):
     if not source_columns:
-        data_columns = set(["NewProcessName", "EventID", "CommandLine"])
+        data_columns = set()
+        if all(
+            col in data.columns for col in ["NewProcessName", "EventID", "CommandLine"]
+        ):
+            data_columns = set(["NewProcessName", "EventID", "CommandLine"])
     else:
         data_columns = set(source_columns)
     # If the time column not explicitly specified in source_columns, add it

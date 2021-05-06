@@ -5,12 +5,13 @@
 # --------------------------------------------------------------------------
 """Module for timeseries analysis functions."""
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 
 from .._version import VERSION
 from ..common.exceptions import MsticpyException, MsticpyImportExtraError
+from ..common.timespan import TimeSpan
 from ..common.utility import check_kwargs, export
 
 try:
@@ -32,7 +33,7 @@ _DEFAULT_KWARGS = ["seasonal", "period", "score_threshold"]
 
 
 @export
-def timeseries_anomalies_stl(data: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def ts_anomalies_stl(data: pd.DataFrame, **kwargs) -> pd.DataFrame:
     """
     Return anomalies in Timeseries using STL.
 
@@ -106,6 +107,9 @@ def timeseries_anomalies_stl(data: pd.DataFrame, **kwargs) -> pd.DataFrame:
     return result
 
 
+timeseries_anomalies_stl = ts_anomalies_stl
+
+
 def extract_anomaly_periods(
     data: pd.DataFrame,
     time_column: str = "TimeGenerated",
@@ -171,6 +175,43 @@ def extract_anomaly_periods(
             periods[start_period] = time + pd.Timedelta(period)
         end_period = time
     return periods
+
+
+def find_anomaly_periods(
+    data: pd.DataFrame,
+    time_column: str = "TimeGenerated",
+    period: str = "1H",
+    pos_only: bool = True,
+) -> List[TimeSpan]:
+    """
+    Merge adjacent anomaly periods.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        The data to process
+    time_column : str, optional
+        The name of the time column
+    period : str, optional
+        pandas-compatible time period designator,
+        by default "1H"
+    pos_only : bool, optional
+        If True only extract positive anomaly periods,
+        else extract both positive and negative.
+        By default, True
+
+    Returns
+    -------
+    List[TimeSpan] :
+        TimeSpan(start, end)
+
+    """
+    return [
+        TimeSpan(start=key, end=val)
+        for key, val in extract_anomaly_periods(
+            data=data, time_column=time_column, period=period, pos_only=pos_only
+        ).items()
+    ]
 
 
 def create_time_period_kqlfilter(periods: Dict[datetime, datetime]) -> str:

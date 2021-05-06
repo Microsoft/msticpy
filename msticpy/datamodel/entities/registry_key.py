@@ -32,6 +32,8 @@ class RegistryKey(Entity):
 
     """
 
+    ID_PROPERTIES = ["Hive", "Key"]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.

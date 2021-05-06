@@ -30,8 +30,9 @@ class FileHash(Entity):
     Value : str
         FileHash Value
 
-
     """
+
+    ID_PROPERTIES = ["Value"]
 
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """

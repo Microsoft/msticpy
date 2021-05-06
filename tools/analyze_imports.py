@@ -127,7 +127,9 @@ if __name__ == "__main__":
     if args.version:
         print(f"Version {VERSION}")
 
-    package_imports = analyze_imports(args.path, args.package, req_file=args.req_file)
+    package_imports = analyze_imports(
+        args.path, args.package, req_file=args.req_file, process_setup_py=False
+    )
     if args.modules:
         for mod, imports in package_imports.items():
             _print_single_module(mod, imports, args)

@@ -47,8 +47,12 @@ class Account(Entity):
         Account IsDomainJoined
     DisplayName : str
         Account DisplayName
+    ObjectGuid : str
+        The object ID of the user account
 
     """
+
+    ID_PROPERTIES = ["QualifiedName", "Sid", "AadUserId", "PUID", "ObjectGuid"]
 
     def __init__(
         self,
@@ -92,6 +96,7 @@ class Account(Entity):
         self.PUID: Optional[str] = None
         self.IsDomainJoined: bool = False
         self.DisplayName: Optional[str] = None
+        self.ObjectGuid: Optional[str] = None
 
         # pylint: disable=locally-disabled, line-too-long
         super().__init__(src_entity=src_entity, **kwargs)
@@ -181,4 +186,5 @@ class Account(Entity):
         "IsDomainJoined": None,
         # DisplayName (type System.String)
         "DisplayName": None,
+        "ObjectGuid": None,
     }

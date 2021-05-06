@@ -26,8 +26,14 @@ class CloudApplication(Entity):
     ----------
     Name : str
         CloudApplication Name
+    AppId : str
+        The AppId of the cloud application
+    InstanceName : str
+        The instance name of the application
 
     """
+
+    ID_PROPERTIES = ["Name"]
 
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
@@ -48,14 +54,18 @@ class CloudApplication(Entity):
 
         """
         self.Name: Optional[str] = None
+        self.AppId: Optional[str] = None
+        self.InstanceName: Optional[str] = None
         super().__init__(src_entity=src_entity, **kwargs)
 
     @property
     def description_str(self) -> str:
         """Return Entity Description."""
-        return self.Name or self.__name__
+        return self.Name or self.__class__.__name__
 
     _entity_schema = {
         # Name (type System.String)
-        "Name": None
+        "Name": None,
+        "AppId": None,
+        "InstanceName": None,
     }

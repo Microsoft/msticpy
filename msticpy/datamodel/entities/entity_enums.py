@@ -17,6 +17,7 @@ __author__ = "Ian Hellen"
 ENTITY_ENUMS: Dict[str, Type] = {}
 
 
+# pylint: disable=invalid-name
 @export
 class Algorithm(Enum):
     """FileHash Algorithm Enumeration."""

@@ -58,6 +58,11 @@ def add_ioc_queries_to_entities(ti_lookup: TILookup, container: str = "ti", **kw
                     setattr(entity, container, query_container)
                 setattr(query_container, f_name, func)
 
+                # Create shortcuts for non-provider-specific funcs
+                if f_name.endswith(ioc):
+                    short_func_name = f"ti{f_name}"
+                    setattr(entity, short_func_name, func)
+
 
 def create_ti_pivot_funcs(ti_lookup: TILookup):
     """Create the TI Pivot functions."""

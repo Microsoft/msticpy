@@ -99,6 +99,13 @@ sources:
   list_related_alerts:
     description: Retrieves list of alerts with a common host, account or process
     metadata:
+      pivot:
+        short_name: alerts
+        direct_func_entities:
+          - Host
+          - Account
+          - IpAddress
+          - Process
     args:
       query: '
         let src_host = "{host_name}";

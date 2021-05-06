@@ -8,6 +8,7 @@ from collections import defaultdict
 from os import path
 from typing import Any, Dict, Iterable, Set, Union, Optional, List
 
+from ..common.exceptions import MsticpyUserConfigError
 from .._version import VERSION
 from .query_defns import DataEnvironment, DataFamily
 from .data_query_reader import find_yaml_files, read_query_def_file
@@ -128,7 +129,15 @@ class QueryStore:
 
             valid, failures = source.validate()
             if not valid:
-                raise ImportError(source.name, failures)
+                raise MsticpyUserConfigError(
+                    source.name,
+                    failures,
+                    title="Error importing query definition file",
+                    help_uri=(
+                        "https://msticpy.readthedocs.io/en/latest/"
+                        + "data_acquisition/DataProviders.html#creating-new-queries"
+                    ),
+                )
 
     def add_query(
         self,

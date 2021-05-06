@@ -29,6 +29,11 @@ defaults:
 sources:
   list_host_events:
     description: Retrieves list of all events on a host
+    metadata:
+      pivot:
+        short_name: all_events
+        direct_func_entities:
+          - Host
     args:
       query: '
         {table}
@@ -47,6 +52,11 @@ sources:
         default: has
   list_host_events_by_id:
     description: Retrieves list of events on a host
+    metadata:
+      pivot:
+        short_name: events_by_id
+        direct_func_entities:
+          - Host
     args:
       query: '
         {table}

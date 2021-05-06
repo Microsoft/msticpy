@@ -32,6 +32,8 @@ class AzureResource(Entity):
 
     """
 
+    ID_PROPERTIES = ["ResourceId"]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.
@@ -60,7 +62,7 @@ class AzureResource(Entity):
     @property
     def description_str(self) -> str:
         """Return Entity Description."""
-        return self.ResourceId or self.__name__
+        return self.ResourceId or self.__class__.__name__
 
     @property
     def SubscriptionId(self):  # noqa

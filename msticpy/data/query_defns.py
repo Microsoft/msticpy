@@ -15,6 +15,7 @@ __version__ = VERSION
 __author__ = "Ian Hellen"
 
 
+# pylint: disable=invalid-name
 @export
 class DataFamily(Enum):
     """

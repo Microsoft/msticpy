@@ -49,13 +49,30 @@ sources:
   list_bookmarks_for_entity:
     description: Retrieves bookmarks for entity string
     metadata:
+      pivot:
+        short_name: bookmarks
+        direct_func_entities:
+          - Host
+          - Account
+          - IpAddress
+          - Url
+          - Dns
     args:
       query: '
+        let entity_str = case(
+          {host_name} != "na", {host_name},
+          {account_name} != "na", {account_name},
+          {ip_address} != "na", {ip_address},
+          {domain} != "na", {domain},
+          {url} != "na", {url},
+          {entity_id} != "na", {entity_id},
+          "no_entity_id"
+        );
         {table}
         {query_project}
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
-        | where QueryResultRow has "{entity_id}"
+        | where QueryResultRow has entity_str
         | extend QryResults = todynamic(QueryResultRow)
         | extend Computer = QryResults["Computer"]
         | extend Account = QryResults["Account"]
@@ -65,8 +82,29 @@ sources:
         {add_query_items}'
     parameters:
       entity_id:
-        description: Identitifier of entity
+        description: Identifier of entity
         type: str
+        default: na
+      host_name:
+        description: Host name
+        type: str
+        default: na
+      account_name:
+        description: Account name
+        type: str
+        default: na
+      ip_address:
+        description: IP address
+        type: str
+        default: na
+      domain:
+        description: Domain name
+        type: str
+        default: na
+      url:
+        description: Url name
+        type: str
+        default: na
   get_bookmark_by_id:
     description: Retrieves a single Bookmark by BookmarkId
     metadata:

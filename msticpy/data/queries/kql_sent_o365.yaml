@@ -24,6 +24,10 @@ sources:
   list_activity_for_account:
     description: Lists Office Activity for Account
     metadata:
+      pivot:
+        short_name: activity
+        direct_func_entities:
+          - Account
     args:
       query: '
         let accountName = "{account_name}";
@@ -48,6 +52,10 @@ sources:
   list_activity_for_ip:
     description: Lists Office Activity for Caller IP Address(es)
     metadata:
+      pivot:
+        short_name: activity
+        direct_func_entities:
+          - IpAddress
     args:
       query: '
         {table}
@@ -63,13 +71,17 @@ sources:
       ip_address_list:
         description: The IP Address or list of Addresses
         type: list
-  list_azure_activity_for_resource:
+  list_activity_for_resource:
     description: Lists Office Activity for a Resource
     metadata:
+      pivot:
+        short_name: activity
+        direct_func_entities:
+          - AzureResource
     args:
       query: '
         {table}
-        | where OfficeObjectId has "{resource}"
+        | where OfficeObjectId has "{resource_id}"
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
         {add_query_items}'
@@ -78,7 +90,8 @@ sources:
         description: Table name
         type: str
         default: OfficeActivity
-      resource:
+      resource_id:
         description: OfficeObjectId or substring
         type: str
+        aliases: resource
 

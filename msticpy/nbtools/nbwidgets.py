@@ -29,7 +29,7 @@ __version__ = VERSION
 __author__ = "Ian Hellen"
 
 
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, invalid-name
 class TimeUnit(IntEnum):
     """Time unit enumeration and value."""
 
@@ -38,6 +38,9 @@ class TimeUnit(IntEnum):
     hour = 60 * 60
     day = 60 * 60 * 24
     week = 7 * 60 * 60 * 24
+
+
+# pylint: enable=invalid-name
 
 
 def _parse_time_unit(unit_str: str) -> TimeUnit:
@@ -396,6 +399,7 @@ class QueryTime(RegisteredWidget):
             layout=Layout(width="70%"),
             style=self._label_style,
         )
+        # pylint: disable=no-member
         self._w_time_unit = widgets.Dropdown(
             options=[
                 unit for unit, _ in TimeUnit.__members__.items() if unit != "second"
@@ -403,6 +407,7 @@ class QueryTime(RegisteredWidget):
             value=self._time_unit.name,
             layout=Layout(width="100px"),
         )
+        # pylint: enable=no-member
 
         self._w_start_time_txt = widgets.Text(
             value=self._query_start.isoformat(sep=" "),

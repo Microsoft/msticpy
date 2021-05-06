@@ -1,6 +1,14 @@
-Blog articles on our Medium account
-===================================
+Blog Articles
+=============
 
+Blog articles on our Medium account
+-----------------------------------
+
+`MSTICPy v1.0.0 Overview and Tour <https://msticpy.medium.com/msticpy-v1-0-0-and-jupyter-notebooks-in-azure-sentinel-an-update-ac2f6df61f9e?source=friends_link&sk=721420baba0796878bf6c1147a28512d>`__
+April 26, 2021
+
+`MSTICPy 1.0.0 Release <https://msticpy.medium.com/msticpy-1-0-0-release-1e8848e45653?source=friends_link&sk=2b5a422928890d2a31770f23a0bf86ca>`__
+April 18, 2021
 
 `MSTICPy v1.0 pre-release <https://msticpy.medium.com/msticpy-1-0-pre-release-6d6edc5df79c>`__
 March 17, 2021
@@ -28,3 +36,10 @@ May 29, 2020
 
 `MSTICPy 0.5.0 release <https://msticpy.medium.com/msticpy-0-5-0-released-a1ebfc362a1?source=friends_link&sk=66640f711c88311bf737e031368d936d>`__
 May 14, 2020
+
+Notebook articles on Azure Sentinel Tech Community
+--------------------------------------------------
+
+`Various articles with on Jupyter notebooks in Azure Sentinel
+<https://techcommunity.microsoft.com/t5/azure-sentinel/bg-p/AzureSentinelBlog/label-name/Notebooks>`__
+that we and others have created.

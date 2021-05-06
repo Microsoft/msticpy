@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import pandas as pd
+from msticpy.common.exceptions import MsticpyException
 from msticpy.data.data_providers import DriverBase, QueryContainer, QueryProvider
 from msticpy.data.query_source import QuerySource
 
@@ -215,17 +216,17 @@ class TestDataQuery(unittest.TestCase):
     def test_load_yaml_def(self):
         """Test query loader rejecting badly formed query files."""
         la_provider = self.la_provider
-        with self.assertRaises((ImportError, ValueError)) as cm:
+        with self.assertRaises((MsticpyException, ValueError)) as cm:
             file_path = Path(_TEST_DATA, "data_q_meta_fail.yaml")
             la_provider.import_query_file(query_file=file_path)
             self.assertIn("no data families defined", str(cm.exception))
 
-        with self.assertRaises((ImportError, ValueError)) as cm:
+        with self.assertRaises((MsticpyException, ValueError)) as cm:
             file_path = Path(_TEST_DATA, "data_q_source_fail_param.yaml")
             la_provider.import_query_file(query_file=file_path)
             self.assertIn("Missing parameters are", str(cm.exception))
 
-        with self.assertRaises((ImportError, ValueError)) as cm:
+        with self.assertRaises((MsticpyException, ValueError)) as cm:
             file_path = Path(_TEST_DATA, "data_q_source_fail_type.yaml")
             la_provider.import_query_file(query_file=file_path)
             self.assertIn("Parameters with missing types", str(cm.exception))

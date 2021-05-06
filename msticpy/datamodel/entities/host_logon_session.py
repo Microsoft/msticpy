@@ -40,6 +40,8 @@ class HostLogonSession(Entity):
 
     """
 
+    ID_PROPERTIES = ["Account", "Host", "SessionId"]
+
     def __init__(
         self,
         src_entity: Mapping[str, Any] = None,
@@ -89,7 +91,7 @@ class HostLogonSession(Entity):
         """Return Entity Description."""
         if self.Host:
             return f"{self.Host.HostName}: session: {self.SessionId}"
-        return self.__name__
+        return self.__class__.__name__
 
     _entity_schema = {
         # Account

@@ -263,7 +263,9 @@ class Pipeline:
         steps = [attr.asdict(step) for step in self.steps]
         return yaml.dump({self.name: {"description": self.description, "steps": steps}})
 
-    def run(self, data: pd.DataFrame, verbose: bool = True) -> Optional[Any]:
+    def run(
+        self, data: pd.DataFrame, verbose: bool = True, debug: bool = False
+    ) -> Optional[Any]:
         """
         Run the pipeline on the supplied DataFrame.
 
@@ -273,6 +275,8 @@ class Pipeline:
             Input DataFrame for pipeline
         verbose : bool, optional
             If True, report progress, by default True
+        debug : bool, optional
+            If True, report more detailed progress, by default False
 
         Returns
         -------
@@ -292,8 +296,11 @@ class Pipeline:
                     "This is not a valid input type for the next stage.",
                 )
                 break
+            exec_kws = {"verbose": verbose, "debug": debug}
             func = _get_pd_accessor_func(pipeline_result, exec_action.accessor)
-            pipeline_result = func(*exec_action.pos_params, **exec_action.params)
+            pipeline_result = func(
+                *exec_action.pos_params, **exec_action.params, **exec_kws
+            )
 
         return pipeline_result
 

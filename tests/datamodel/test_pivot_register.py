@@ -218,7 +218,7 @@ _ENTITY_QUERIES = [
             args=dict(Address="104.211.30.1"),
             attrib="Address",
             provider="util",
-            pivot_func="geoloc_mm",
+            pivot_func="geoloc",
             func_param="value",
             src_col="ip",
             exp_col="CountryName",

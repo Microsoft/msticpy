@@ -18,7 +18,7 @@ from msticpy.datamodel import entities
 from msticpy.datamodel.pivot_data_queries import (
     PivotQueryFunctions,
     add_queries_to_entities,
-    _param_and_call_wrapper,
+    _create_pivot_func,
 )
 
 _KQL_IMP_OK = False
@@ -167,13 +167,13 @@ _WRAP_TEST_CASES = [
 
 
 @pytest.mark.parametrize("test_input, expected", _WRAP_TEST_CASES)
-def test_param_and_call_wrapper(test_input, expected):
+def test_create_pivot_func(test_input, expected):
     """Test wrapper creation for data queries."""
     attrib_map = {"p1": "p1", "p2": "p2", "p3": "p3", "p4": "p4"}
 
     # generate test data
     f_params, params, test_df = _generate_test_data(**test_input)
-    call_data_query = _param_and_call_wrapper(
+    call_data_query = _create_pivot_func(
         _dummy_func, f_params, attrib_map, _get_timespan
     )
     add_params = (
@@ -204,13 +204,13 @@ _WRAP_TEST_CASES_DF = [
 
 
 @pytest.mark.parametrize("test_input, expected", _WRAP_TEST_CASES_DF)
-def test_param_and_call_wrapper_df(test_input, expected):
+def test_create_pivot_func(test_input, expected):
     """Test wrapper creation for data queries."""
     attrib_map = {"p1": "p1", "p2": "p2", "p3": "p3", "p4": "p4"}
 
     # simple test with scalar params
     f_params, params, test_df = _generate_test_data(**test_input)
-    call_data_query = _param_and_call_wrapper(
+    call_data_query = _create_pivot_func(
         _dummy_func, f_params, attrib_map, _get_timespan
     )
     add_params = (
@@ -231,10 +231,12 @@ def test_param_and_call_wrapper_df(test_input, expected):
 
 _ENT_QUERY_FUNC = [
     (entities.Host, 25),
-    (entities.Account, 19),
-    (entities.IpAddress, 16),
+    (entities.Account, 16),
+    (entities.IpAddress, 12),
     (entities.Process, 7),
-    (entities.Url, 7),
+    (entities.Url, 2),
+    (entities.Dns, 2),
+    (entities.AzureResource, 2),
 ]
 
 
@@ -253,7 +255,5 @@ def test_add_queries_to_entities(entity, expected, azure_sentinel):
 
     for func_name in funcs:
         func = getattr(f_container, func_name)
-        check.equal(
-            func.__qualname__, "_param_and_call_wrapper.<locals>.wrapped_query_func"
-        )
+        check.equal(func.__qualname__, "_create_pivot_func.<locals>.wrapped_query_func")
         check.is_in("Parameters", func.__doc__)

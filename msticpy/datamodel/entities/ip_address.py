@@ -36,6 +36,8 @@ class IpAddress(Entity):
 
     """
 
+    ID_PROPERTIES = ["Address"]
+
     def __init__(
         self,
         src_entity: Mapping[str, Any] = None,
@@ -71,9 +73,12 @@ class IpAddress(Entity):
             self.Address = src_event["IpAddress"]
 
     @property
-    def ip_address(self) -> Union[IPv4Address, IPv6Address]:
+    def ip_address(self) -> Union[IPv4Address, IPv6Address, None]:
         """Return a python IP address object from the entity property."""
-        return ip_address(self.Address)
+        try:
+            return ip_address(self.Address)
+        except ValueError:
+            return None
 
     @property
     def description_str(self) -> str:

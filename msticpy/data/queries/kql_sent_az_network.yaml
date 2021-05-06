@@ -6,7 +6,7 @@ metadata:
   tags: ['network', 'azure']
 defaults:
   metadata:
-    data_source: 'linux_syslog'
+    data_source: 'AzureNetworkAnalytics'
   parameters:
       table:
         description: Table name
@@ -55,6 +55,9 @@ defaults:
 sources:
   az_net_analytics:
     description: All Azure Network Analytics Data
+    metadata:
+      pivot:
+        short_name: net_flows_depr
     args:
       query: '
         {table}

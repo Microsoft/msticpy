@@ -67,3 +67,16 @@ class Edge:
     def add_attr(self, name: str, value: Any):
         """Add an edge attribute."""
         self.attrs[name] = value
+
+    def __str__(self):
+        """Return string representation of edge."""
+        return self.attrs.get("name", "unnamed-edge")
+
+    def __repr__(self):
+        """Return full repr of edge."""
+        other_attrs = [
+            f"{name}='{val}'" for name, val in self.attrs.items() if name != "name"
+        ]
+        if not other_attrs:
+            return f"Edge(name={str(self)}"
+        return f"Edge(name={str(self)}, {', '.join(other_attrs)}"

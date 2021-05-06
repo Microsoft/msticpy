@@ -53,16 +53,22 @@ _PKG_RENAME_NAME = {
 
 
 def _get_setup_reqs(
-    package_root: str, req_file="requirements.txt", extras: Optional[List[str]] = None
+    package_root: str,
+    req_file="requirements.txt",
+    extras: Optional[List[str]] = None,
+    skip_setup=True,
 ):
     with open(Path(package_root).joinpath(req_file), "r") as req_f:
         req_list = req_f.readlines()
 
     setup_pkgs = _extract_pkg_specs(req_list)
-    if not extras:
-        extras = get_extras_from_setup(package_root=package_root, extra="all")
-        extra_pkgs = _extract_pkg_specs(extras)
-        setup_pkgs = setup_pkgs | extra_pkgs
+    if not skip_setup and not extras:
+        try:
+            extras = get_extras_from_setup(package_root=package_root, extra="all")
+            extra_pkgs = _extract_pkg_specs(extras)
+            setup_pkgs = setup_pkgs | extra_pkgs
+        except ImportError:
+            print("Could not process modifed 'setup.py'")
     setup_versions = {key[0].casefold(): key for key in setup_pkgs}
     setup_reqs = {key[0].casefold(): key[0] for key in setup_pkgs}
 
@@ -114,7 +120,7 @@ def get_extras_from_setup(
     setup_py = str(Path(package_root) / setup_py)
 
     setup_txt = None
-    with open(setup_py, "+r") as f_handle:
+    with open(setup_py, "r") as f_handle:
         setup_txt = f_handle.read()
 
     srch_txt = "setuptools.setup("
@@ -126,12 +132,12 @@ def get_extras_from_setup(
     ]
     setup_txt = setup_txt.replace(srch_txt, "\n".join(repl_txt))
 
-    neut_setup_py = Path(package_root) / "msticpy/neut_setup.py"
+    neut_setup_py = Path(package_root) / "neut_setup.py"
     try:
-        with open(neut_setup_py, "+w") as f_handle:
+        with open(neut_setup_py, "w") as f_handle:
             f_handle.writelines(setup_txt)
 
-        setup_mod = import_module("msticpy.neut_setup", "msticpy")
+        setup_mod = import_module("neut_setup")
         extras = getattr(setup_mod, "EXTRAS").get(extra)
         if include_base:
             base_install = getattr(setup_mod, "INSTALL_REQUIRES")
@@ -269,6 +275,7 @@ def analyze_imports(
     package_name: str,
     req_file: str = "requirements.txt",
     extras: Optional[List[str]] = None,
+    process_setup_py: bool = True,
 ) -> Dict[str, ModuleImports]:
     """
     Analyze imports for package.
@@ -284,6 +291,8 @@ def analyze_imports(
         by default "requirements.txt"
     extras : List[str]
         A list of extras not specified in requirements file.
+    process_setup_py : bool, optional
+        If True try to parse setup.py for extras.
 
     Returns
     -------
@@ -291,7 +300,9 @@ def analyze_imports(
         A dictionary of modules and imports
 
     """
-    setup_reqs, _ = _get_setup_reqs(package_root, req_file, extras)
+    setup_reqs, _ = _get_setup_reqs(
+        package_root, req_file, extras, skip_setup=(not process_setup_py)
+    )
     pkg_root = Path(package_root) / package_name
     all_mod_imports: Dict[str, ModuleImports] = {}
     pkg_modules = _get_pkg_modules(pkg_root)

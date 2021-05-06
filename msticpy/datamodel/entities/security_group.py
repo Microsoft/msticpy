@@ -33,6 +33,8 @@ class SecurityGroup(Entity):
 
     """
 
+    ID_PROPERTIES = ["DistinguishedName", "SID", "ObjectGuid"]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.
@@ -59,7 +61,7 @@ class SecurityGroup(Entity):
     @property
     def description_str(self):
         """Return Entity Description."""
-        return self.DistinguishedName or self.__name__
+        return self.DistinguishedName or self.__class__.__name__
 
     _entity_schema = {
         # DistinguishedName (type System.String)

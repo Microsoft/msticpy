@@ -75,11 +75,7 @@ def data_providers():
 
 def _reset_entities():
     """Clear any query containers in entities."""
-    for entity_name in ("Host", "IpAddress", "Account", "Url"):
-        entity = getattr(entities, entity_name)
-        for attr in dir(entity):
-            if isinstance(getattr(entity, attr), QueryContainer):
-                delattr(entity, attr)
+    Pivot.remove_pivot_funcs(entity="all")
 
 
 PivotTestCase = namedtuple("PivotTestCase", "entity, container, funcs")
@@ -88,16 +84,16 @@ _ENTITY_FUNCS = [
     pytest.param(PivotTestCase("Host", "MDE", 2), id="Host-MDE"),
     pytest.param(PivotTestCase("Host", "util", 3), id="Host-util"),
     pytest.param(
-        PivotTestCase("IpAddress", "AzureSentinel", 16), id="IpAddress-AzureSentinel"
+        PivotTestCase("IpAddress", "AzureSentinel", 15), id="IpAddress-AzureSentinel"
     ),
     pytest.param(PivotTestCase("IpAddress", "MDE", 2), id="IpAddress-MDE"),
     pytest.param(PivotTestCase("IpAddress", "ti", 8), id="IpAddress-ti"),
     pytest.param(PivotTestCase("IpAddress", "util", 4), id="IpAddress-util"),
     pytest.param(
-        PivotTestCase("Account", "AzureSentinel", 19), id="Account-AzureSentinel"
+        PivotTestCase("Account", "AzureSentinel", 16), id="Account-AzureSentinel"
     ),
     pytest.param(PivotTestCase("Account", "MDE", 4), id="Account-MDE"),
-    pytest.param(PivotTestCase("Url", "AzureSentinel", 7), id="Url-AzureSentinel"),
+    pytest.param(PivotTestCase("Url", "AzureSentinel", 2), id="Url-AzureSentinel"),
     pytest.param(PivotTestCase("Url", "MDE", 2), id="Url-MDE"),
     pytest.param(PivotTestCase("Url", "ti", 4), id="Url-ti"),
     pytest.param(PivotTestCase("Url", "util", 5), id="Url-util"),
@@ -220,9 +216,7 @@ def test_pivot_time(data_providers):
     # Make sure the values provided to queries match.
     _fake_provider_connected(data_providers["az_sent_prov"])
 
-    query = entities.Host.AzureSentinel.SecurityEvent_list_host_processes(
-        host_name="test", print=True
-    )
+    query = entities.Host.AzureSentinel.wevt_processes(host_name="test", print=True)
     check.is_in(start.isoformat(), query)
     check.is_in(end.isoformat(), query)
 
@@ -234,7 +228,7 @@ _ENTITY_QUERIES = [
             "Host",
             dict(HostName="testhost", DnsDomain="contoso.com"),
             "AzureSentinel",
-            "SecurityEvent_list_host_processes",
+            "wevt_processes",
             'Computer has "testhost.contoso.com"',
         ),
         id="Host",
@@ -244,7 +238,7 @@ _ENTITY_QUERIES = [
             "Account",
             dict(Name="testacct"),
             "AzureSentinel",
-            "SecurityEvent_list_logons_by_account",
+            "wevt_logons",
             'where Account has "testacct"',
         ),
         id="Account",
@@ -254,7 +248,7 @@ _ENTITY_QUERIES = [
             "IpAddress",
             dict(Address="192.168.1.2"),
             "AzureSentinel",
-            "Heartbeat_get_info_by_ipaddress",
+            "hb_heartbeat",
             '| where ComputerIP == "192.168.1.2"',
         ),
         id="IpAddress",
@@ -295,3 +289,34 @@ _ENTITY_PIVOTS = [
 def test_entity_list_piv_functions(_create_pivot_list, entity, expected_funcs):
     """Test the pivot_funcs property."""
     check.greater(len(entity.get_pivot_list()), expected_funcs)
+
+
+def _get_piv_attrs(entity):
+    return [
+        attr
+        for attr in dir(entity)
+        if hasattr(getattr(entity, attr), "pivot_properties")
+        or type(getattr(entity, attr)).__name__ == "QueryContainer"
+    ]
+
+
+def test_remove_pivots(_create_pivot_ns):
+    """Test remove pivots function."""
+    piv_attrs = _get_piv_attrs(entities.Host)
+    check.is_true(piv_attrs)
+
+    with pytest.raises(ValueError):
+        Pivot.remove_pivot_funcs(entity="TestEntity")
+
+    piv_attrs = _get_piv_attrs(entities.Host)
+    check.is_true(piv_attrs)
+
+    Pivot.remove_pivot_funcs(entity="Host")
+    piv_attrs = _get_piv_attrs(entities.Host)
+    check.is_false(piv_attrs)
+
+    piv_attrs = _get_piv_attrs(entities.IpAddress)
+    check.is_true(piv_attrs)
+    Pivot.remove_pivot_funcs(entity="all")
+    piv_attrs = _get_piv_attrs(entities.IpAddress)
+    check.is_false(piv_attrs)

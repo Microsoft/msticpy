@@ -36,6 +36,8 @@ class Dns(Entity):
 
     """
 
+    ID_PROPERTIES = ["DomainName"]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.

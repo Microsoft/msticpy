@@ -60,6 +60,11 @@ defaults:
 sources:
   list_host_processes:
     description: Retrieves list of processes on a host
+    metadata:
+      pivot:
+        short_name: processes
+        direct_func_entities:
+          - Host
     args:
       query: '
         let start = datetime({start});
@@ -82,6 +87,11 @@ sources:
         default: has
   list_matching_processes:
     description: Retrieves list of processes matching process name
+    metadata:
+      pivot:
+        short_name: similar_processes
+        direct_func_entities:
+          - Process
     args:
       query: '
         let start = datetime({start});
@@ -217,6 +227,11 @@ sources:
         type: str
   get_parent_process:
     description: Retrieves the parent process of a supplied process
+    metadata:
+      pivot:
+        short_name: parent_process
+        direct_func_entities:
+          - Process
     args:
       query: '
         let start = datetime({start});
@@ -272,6 +287,11 @@ sources:
         default: 2
   list_hosts_matching_commandline:
     description: Retrieves processes on hosts with matching commandline
+    metadata:
+      pivot:
+        short_name: processes_with_same_commandline
+        direct_func_entities:
+          - Process
     args:
       query: '
         {table}
@@ -292,6 +312,12 @@ sources:
         type: str
   list_processes_in_session:
     description: Retrieves all processes on the host for a logon session
+    metadata:
+      pivot:
+        short_name: process_session
+        direct_func_entities:
+          - Host
+          - Process
     args:
       query: '
         {table}

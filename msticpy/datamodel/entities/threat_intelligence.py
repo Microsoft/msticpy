@@ -39,6 +39,8 @@ class Threatintelligence(Entity):
 
     """
 
+    ID_PROPERTIES = ["ProviderName", "ThreatName", "ReportLink"]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.
@@ -57,7 +59,7 @@ class Threatintelligence(Entity):
     @property
     def description_str(self) -> str:
         """Return Entity Description."""
-        return f"{self.DisplayName} ({self.StartTimeUtc}) {self.CompromisedEntity}"
+        return f"{self.ThreatName} ({self.ThreatType})"
 
     _entity_schema = {
         # String Name of the provider from whom this

@@ -168,7 +168,12 @@ class FileBrowser(CompEditDisplayMixin):
         """Handle event for search button."""
         del btn
         if self.txt_search.value:
-            found_files = list(self.current_folder.rglob(self.txt_search.value))
+            found_files: Optional[List[Path]] = None
+            while found_files is None:
+                try:
+                    found_files = list(self.current_folder.rglob(self.txt_search.value))
+                except FileNotFoundError:
+                    pass
             self.select_search.options = [
                 str(file) for file in found_files if file.exists()
             ]

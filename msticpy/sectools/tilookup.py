@@ -167,6 +167,81 @@ class TILookup:
                 providers.append(provider_class.__name__)
         return providers
 
+    def enable_provider(self, providers: Union[str, Iterable[str]]):
+        """
+        Set the provider(s) as primary (used by default).
+
+        Parameters
+        ----------
+        providers : Union[str, Iterable[str]
+            Provider name or list of names.
+            Use `list_available_providers()` to see the list of loaded providers.
+
+        Raises
+        ------
+        ValueError
+            If the provider name is not recognized.
+
+        """
+        providers = [providers] if isinstance(providers, str) else providers
+        for provider in providers:
+            if provider in self._secondary_providers:
+                self._providers[provider] = self._secondary_providers[provider]
+                del self._secondary_providers[provider]
+            elif provider not in self._providers:
+                raise ValueError(
+                    f"Unknown provider '{provider}'. Available providers:",
+                    ", ".join(self.list_available_providers(as_list=True)),  # type: ignore
+                )
+        # disable all other providers
+        for provider in self._providers:
+            if provider not in providers:
+                self.disable_provider(provider)
+
+    def disable_provider(self, providers: Union[str, Iterable[str]]):
+        """
+        Set the provider as secondary (not used by default).
+
+        Parameters
+        ----------
+        providers : Union[str, Iterable[str]
+            Provider name or list of names.
+            Use `list_available_providers()` to see the list of loaded providers.
+
+        Raises
+        ------
+        ValueError
+            If the provider name is not recognized.
+
+        """
+        providers = [providers] if isinstance(providers, str) else providers
+        for provider in providers:
+            if provider in self._providers:
+                self._secondary_providers[provider] = self._providers[provider]
+                del self._providers[provider]
+            elif provider not in self._secondary_providers:
+                raise ValueError(
+                    f"Unknown provider '{provider}'. Available providers:",
+                    ", ".join(self.list_available_providers(as_list=True)),  # type: ignore
+                )
+
+    def set_provider_state(self, prov_dict: Dict[str, bool]):
+        """
+        Set a dict of providers to primary/secondary.
+
+        Parameters
+        ----------
+        prov_dict : Dict[str, bool]
+            Dictionary of provider name and bool - True if enabled/primary,
+            False if disabled/secondary.
+
+        """
+        for prov, state in prov_dict.items():
+            if state:
+                self.enable_provider(prov)
+            else:
+                self.disable_provider(prov)
+
     @classmethod
     def list_available_providers(
         cls, show_query_types=False, as_list: bool = False
@@ -231,7 +306,7 @@ class TILookup:
 
     def reload_providers(self):
         """
-        Reload providers based on currrent settings in config.
+        Reload providers based on current settings in config.
 
         Parameters
         ----------
@@ -272,8 +347,10 @@ class TILookup:
                     "To avoid loading this provider please use the 'providers' parameter"
                     + " to TILookup() to specify which providers to load.",
                     title="TIProvider configuration error",
-                    help_uri="https://msticpy.readthedocs.io/en/latest/data_acquisition/"
-                    + "TIProviders.html#configuration-file",
+                    help_uri=(
+                        "https://msticpy.readthedocs.io/en/latest/data_acquisition/TIProviders.html"
+                        + "#configuration-file"
+                    ),
                 ) from mp_ex
 
             # set the description from settings, if one is provided, otherwise

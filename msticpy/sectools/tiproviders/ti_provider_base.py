@@ -46,10 +46,13 @@ SanitizedObservable = namedtuple("SanitizedObservable", ["observable", "status"]
 class TISeverity(Enum):
     """Threat intelligence report severity."""
 
+    # pylint: disable=invalid-name
     unknown = -1
     information = 0
     warning = 1
     high = 2
+
+    # pylint: enable=invalid-name
 
     @classmethod
     def parse(cls, value) -> "TISeverity":

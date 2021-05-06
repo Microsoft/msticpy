@@ -4,7 +4,7 @@
 # license information.
 # --------------------------------------------------------------------------
 """Url Entity class."""
-from typing import Any, Dict, Mapping
+from typing import Any, Dict, Mapping, Optional
 
 from ..._version import VERSION
 from ...common.utility import export
@@ -20,7 +20,17 @@ __author__ = "Ian Hellen"
 
 @export
 class Url(Entity):
-    """URL Entity."""
+    """
+    URL Entity.
+
+    Attributes
+    ----------
+    Url : str
+        The URL
+
+    """
+
+    ID_PROPERTIES = ["Url"]
 
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
@@ -29,30 +39,31 @@ class Url(Entity):
             :param src_entity: instantiate entity using properties of src entity
             :param kwargs: key-value pair representation of entity
         """
+        self.Url: Optional[str] = None
         super().__init__(src_entity=src_entity, **kwargs)
-        if self.Url:
-            self.__dict__.update(url_components(self.Url))
 
     @property
     def description_str(self) -> str:
         """Return Entity Description."""
-        return f"{self.Url}"
+        return self.Url or super().description_str
 
-    # # We need to do some trickery with the Url defined as
-    # # a property since base Entity class expects to be able to set
-    # # attributes directly in self.__dict__
-    # @property
-    # def Url(self) -> Optional[str]:
-    #     """Return Url."""
-    #     if self._url is None and "Url" in self.__dict__:
-    #         self.Url = self.__dict__["Url"]
-    #     return self._url
+    def __getitem__(self, key: str):
+        """Allow property get using dictionary key syntax."""
+        if self.Url:
+            val = url_components(self.Url).get(key)
+            if val:
+                return val
+        return super().__getitem__(key)
 
-    # @Url.setter
-    # def Url(self, url):
-    #     """Return host component of Url."""
-    #     self._url = url
-    #     if url:
-    #         self.__dict__.update(url_components(url))
+    def __getattr__(self, name: str):
+        """Return the value of the named property 'name'."""
+        if self.Url:
+            val = url_components(self.Url).get(name)
+            if val:
+                return val
+        return super().__getattr__(name)
 
-    _entity_schema: Dict[str, Any] = {}
+    _entity_schema: Dict[str, Any] = {
+        # Url (type System.String)
+        "Url": None,
+    }

@@ -48,6 +48,8 @@ class File(Entity):
 
     """
 
+    ID_PROPERTIES = ["FullPath", "Sha1", "Sha256", "Sha256ac", "Md5"]
+
     def __init__(
         self,
         src_entity: Mapping[str, Any] = None,
@@ -103,14 +105,16 @@ class File(Entity):
     @property
     def path_separator(self):
         """Return the path separator used by the file."""
-        if self.Directory and "/" in self.Directory:
+        if (
+            self.Directory and "/" in self.Directory
+        ) or self.OSFamily != OSFamily.Windows:
             return "/"
         return "\\"
 
     @property
     def description_str(self) -> str:
         """Return Entity Description."""
-        return self.FullPath or self.__name__
+        return self.FullPath or self.__class__.__name__
 
     def _create_from_event(self, src_event, role):
         if role == "new" and "NewProcessName" in src_event:

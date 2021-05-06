@@ -6,7 +6,8 @@
 """Pivot helper functions ."""
 from collections import abc
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
+import warnings
 
 import attr
 import pandas as pd
@@ -79,6 +80,8 @@ class PivotRegistration:
     return_raw_output : bool
         Return raw output from the wrapped function, do not
         try to format into a DataFrame. Default is False.
+    create_shortcut : bool
+        If True, create a shortcut function directly on the entity.
 
     """
 
@@ -98,6 +101,7 @@ class PivotRegistration:
     src_config_entry: Optional[str] = None
     entity_container_name: Optional[str] = None
     return_raw_output: bool = False
+    create_shortcut: bool = False
 
     def attr_for_entity(self, entity: Union[entities.Entity, str]) -> Optional[str]:
         """
@@ -161,7 +165,7 @@ def create_pivot_func(
         """
         # remove and save the join kw, if specified (so it doesn't interfere
         # with other operations and doesn't get sent to the function)
-        join_type = kwargs.pop("join", None)
+        join_type, left_on, right_on, j_ignore_case = get_join_params(kwargs)
 
         input_value = _get_input_value(*args, pivot_reg=pivot_reg, parent_kwargs=kwargs)
         _check_valid_settings_for_input(input_value, pivot_reg)
@@ -195,15 +199,133 @@ def create_pivot_func(
         # If requested to join to input
         # and this function is returning a DataFrame
         if join_type and not pivot_reg.return_raw_output:
-            return input_df.merge(
-                result_df,
-                left_on=input_column,
-                right_on=merge_key,
+            left_on = left_on or input_column
+            right_on = right_on or merge_key
+            return join_result(
+                input_df=input_df,
+                result_df=result_df,
                 how=join_type,
-            )
+                left_on=left_on,
+                right_on=right_on,
+                ignore_case=j_ignore_case,
+            ).drop(columns="src_row_index", errors="ignore")
         return result_df
 
+    setattr(
+        pivot_lookup,
+        "pivot_properties",
+        attr.asdict(pivot_reg, filter=(lambda _, val: val is not None)),
+    )
     return pivot_lookup
+
+
+def get_join_params(
+    func_kwargs: Dict[str, Any]
+) -> Tuple[Optional[str], Optional[str], Optional[str], bool]:
+    """
+    Get join parameters from kwargs.
+
+    Parameters
+    ----------
+    func_kwargs : Dict[str, Any]
+        Keyword arguments from caller
+
+    Returns
+    -------
+    Tuple[str, str, str, bool]
+        join_type, left_on, right_on, join_ignore_case
+
+    """
+    # remove and save the join kw, if specified (so it doesn't interfere
+    # with other operations and doesn't get sent to the function)
+    join_type = func_kwargs.pop("join", None)
+    join_ignore_case = func_kwargs.pop("join_ignore_case", None)
+    if not join_type:
+        return None, None, None, False
+    left_on = func_kwargs.pop("left_on", None)
+    right_on = func_kwargs.pop("right_on", None)
+    if left_on and not right_on:
+        warnings.warn(
+            "If you are specifying explicit join keys "
+            "you must specify 'right_on' parameter with the "
+            + "name of the output column to join on. "
+            + "Results will joined on index."
+        )
+    if not left_on:
+        col_keys = list(func_kwargs.keys() - {"start", "end", "data"})
+        if len(col_keys) == 1:
+            # Only one input param so assume this is the src/left
+            # join key
+            left_on = func_kwargs.get(col_keys[0])
+
+    if right_on and not left_on:
+        warnings.warn(
+            "Could not infer 'left' join column from source data. "
+            + "Please specify 'left_on' parameter with the "
+            + "name of the source column to join on. "
+            + "Results will joined on index."
+        )
+    return join_type, left_on, right_on, join_ignore_case
+
+
+def join_result(
+    input_df: pd.DataFrame,
+    result_df: pd.DataFrame,
+    how: str,
+    left_on: str,
+    right_on: str,
+    ignore_case: bool,
+) -> pd.DataFrame:
+    """
+    Join input and result DFs, optionally ignoring case.
+
+    Parameters
+    ----------
+    input_df : pd.DataFrame
+        Input DF
+    result_df : pd.DataFrame
+        Result DF
+    how : str
+        Join type - "inner", "left", "right", "outer"
+    left_on : str
+        Column from `input_df` to use as join key
+    right_on : str
+        Column from `result_df` to use as join key
+    ignore_case : bool
+        If True and input_df column is a string
+
+    Returns
+    -------
+    pd.DataFrame
+        The merged DataFrame
+
+    """
+    if not ignore_case or input_df[left_on].dtype.name not in (
+        "string",
+        "object",
+    ):
+        # Not requested case-insensitive join OR input column is
+        # not a string/object
+        return input_df.merge(
+            result_df,
+            left_on=left_on,
+            right_on=right_on,
+            how=how,
+            suffixes=("_src", "_res"),
+        )
+
+    # We need to join case-insensitive
+    left_on = f"{left_on}_lc"
+    input_df[left_on] = input_df[left_on].str.casefold()
+    right_on = f"{right_on}_lc"
+    result_df[right_on] = result_df[right_on].astype("string").str.casefold()
+    return input_df.merge(
+        result_df,
+        left_on=left_on,
+        right_on=right_on,
+        how=how,
+        suffixes=("_src", "_res"),
+    ).drop(columns=[left_on, right_on])
 
 
 def _get_entity_attr_or_self(obj, attrib):
@@ -355,7 +477,8 @@ def _iterate_func(target_func, input_df, input_column, pivot_reg, **kwargs):
     all_rows_kwargs = kwargs.copy()
     all_rows_kwargs.update((pivot_reg.func_static_params or {}))
     res_key_col_name = pivot_reg.func_out_column_name or pivot_reg.func_input_value_arg
-    for row in input_df[[input_column]].itertuples(index=False):
+
+    for row_index, row in enumerate(input_df[[input_column]].itertuples(index=False)):
         # Get rid of any conflicting arguments from kwargs
         func_kwargs = all_rows_kwargs.copy()
         func_kwargs.pop(pivot_reg.func_input_value_arg, None)
@@ -376,6 +499,7 @@ def _iterate_func(target_func, input_df, input_column, pivot_reg, **kwargs):
                 result = pd.DataFrame(
                     [[col_value, str(result)]], columns=[res_key_col_name, "result"]
                 )
+            result["src_row_index"] = row_index
         results.append(result)
     if pivot_reg.return_raw_output:
         if len(results) == 1:

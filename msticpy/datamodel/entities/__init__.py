@@ -23,13 +23,18 @@ from .file_hash import FileHash
 from .geo_location import GeoLocation
 from .host import Host
 from .host_logon_session import HostLogonSession
+from .iot_device import IoTDevice
 from .ip_address import IpAddress
+from .mailbox import Mailbox
+from .mail_cluster import MailCluster
+from .mail_message import MailMessage
 from .malware import Malware
 from .network_connection import NetworkConnection
 from .process import Process
 from .registry_key import RegistryKey
 from .registry_value import RegistryValue
 from .security_group import SecurityGroup
+from .submission_mail import SubmissionMail
 from .threat_intelligence import Threatintelligence
 from .unknown_entity import UnknownEntity
 from .url import Url
@@ -45,8 +50,12 @@ Entity.ENTITY_NAME_MAP.update(
         "cloudapplication": CloudApplication,
         "dnsresolve": Dns,
         "ipaddress": IpAddress,
+        "iotdevice": IoTDevice,
         "ip": IpAddress,
         "networkconnection": NetworkConnection,
+        "mailbox": Mailbox,
+        "mail-message": MailMessage,
+        "mail-cluster": MailCluster,
         "malware": Malware,
         "registry-key": RegistryKey,
         "registrykey": RegistryKey,
@@ -57,6 +66,7 @@ Entity.ENTITY_NAME_MAP.update(
         "filehash": FileHash,
         "security-group": SecurityGroup,
         "securitygroup": SecurityGroup,
+        "SubmissionMail": SubmissionMail,
         "alerts": Alert,
         "alert": Alert,
         "threatintelligence": Threatintelligence,

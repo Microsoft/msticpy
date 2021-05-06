@@ -292,7 +292,11 @@ def init_notebook(
             InteractiveShell.showtraceback
         )
 
-    prov_dict = load_user_defaults()
+    user_def_out = io.StringIO()
+    with redirect_stdout(user_def_out):
+        prov_dict = load_user_defaults()
+        _pr_output(user_def_out.getvalue())
+
     if prov_dict:
         namespace.update(prov_dict)
         current_providers = prov_dict
@@ -556,7 +560,7 @@ def _check_and_reload_pkg(
     pkg_name = pkg.__name__
     if not hasattr(pkg, "__version__"):
         raise MsticpyException(f"Package {pkg_name} has no version data.")
-    pkg_version = tuple([int(v) for v in pkg.__version__.split(".")])
+    pkg_version = tuple(int(v) for v in pkg.__version__.split("."))
     if pkg_version < req_version:
         display(HTML(_MISSING_PKG_WARN.format(package=pkg_name)))
         if not unit_testing():

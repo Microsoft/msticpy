@@ -5,7 +5,7 @@
 # --------------------------------------------------------------------------
 """Query hierarchy attribute class."""
 from functools import partial
-from typing import Any, Dict, Type
+from typing import Any, Dict, Optional, Type
 
 from ..common.utility import check_kwarg
 from .._version import VERSION
@@ -36,10 +36,16 @@ class QueryContainer:
                 pass
             else:
                 return attr
+        nm_err: Optional[Exception] = None
         try:
+            # check for similar-named attributes in __dict__
             check_kwarg(name, list(self.__dict__.keys()))
-        except NameError:
-            pass
+        except NameError as err:
+            nm_err = err
+        if nm_err:
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute {name}"
+            ) from nm_err
         raise AttributeError(
             f"{self.__class__.__name__} object has no attribute {name}"
         )
@@ -59,7 +65,7 @@ class QueryContainer:
     def __call__(self, *args, **kwargs):
         """Return list of attributes or help."""
         if args or kwargs:
-            print(f"{self.__name__} is a container, not a query.")
+            print("This attribute is a container, not a query.")
             print("Items in this container:")
         print(repr(self))
 

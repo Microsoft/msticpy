@@ -45,18 +45,18 @@ defaults:
   metadata:
     data_source: 'network'
   parameters:
-      table:
-        description: Table name
-        type: str
-        default: 'AzureNetworkAnalytics_CL'
-      add_query_items:
-        description: Additional query clauses
-        type: str
-        default: ''
+    add_query_items:
+      description: Additional query clauses
+      type: str
+      default: ''
 sources:
   get_ips_for_host:
     description: Gets the latest AzureNetworkAnalytics interface event for a host.
     metadata:
+      pivot:
+        short_name: interface
+        direct_func_entities:
+          - Host
     args:
       query: '
         {table}
@@ -70,9 +70,17 @@ sources:
       host_name:
         description: Name of host
         type: str
+      table:
+        description: Table name
+        type: str
+        default: AzureNetworkAnalytics_CL
   get_host_for_ip:
     description: Gets the latest AzureNetworkAnalytics interface event for a host.
     metadata:
+      pivot:
+        short_name: interface
+        direct_func_entities:
+          - IpAddress
     args:
       query: '
         {table}
@@ -88,10 +96,18 @@ sources:
       ip_address:
         description: IP Address
         type: str
+      table:
+        description: Table name
+        type: str
+        default: AzureNetworkAnalytics_CL
   get_heartbeat_for_host:
     description: Retrieves latest OMS Heartbeat event for host.
     metadata:
       data_families: [AzureNetwork, Network, Heartbeat]
+      pivot:
+        short_name: heartbeat
+        direct_func_entities:
+          - Host
     args:
       query: '
         {table}
@@ -105,11 +121,15 @@ sources:
       table:
         description: Table name
         type: str
-        default: 'Heartbeat'
+        default: Heartbeat
   get_heartbeat_for_ip:
     description: Retrieves latest OMS Heartbeat event for ip address.
     metadata:
       data_families: [AzureNetwork, Network, Heartbeat]
+      pivot:
+        short_name: heartbeat
+        direct_func_entities:
+          - IpAddress
     args:
       query: '
         {table}
@@ -123,10 +143,14 @@ sources:
       table:
         description: Table name
         type: str
-        default: 'Heartbeat'
+        default: Heartbeat
   list_azure_network_flows_by_ip:
     description: Retrieves Azure network analytics flow events.
     metadata:
+      pivot:
+        short_name: net_flows
+        direct_func_entities:
+          - IpAddress
     args:
       query: *azure_network_base_query
     parameters:
@@ -143,6 +167,10 @@ sources:
       end:
         description: Query end time
         type: datetime
+      table:
+        description: Table name
+        type: str
+        default: AzureNetworkAnalytics_CL
     query_macros:
       query_condition:
         description: Query-specific where clause
@@ -153,6 +181,10 @@ sources:
   list_azure_network_flows_by_host:
     description: Retrieves Azure network analytics flow events.
     metadata:
+      pivot:
+        short_name: net_flows
+        direct_func_entities:
+          - Host
     args:
       query: *azure_network_base_query
     parameters:
@@ -169,6 +201,10 @@ sources:
       end:
         description: Query end time
         type: datetime
+      table:
+        description: Table name
+        type: str
+        default: AzureNetworkAnalytics_CL
     query_macros:
       query_condition:
         description: Query-specific where clause

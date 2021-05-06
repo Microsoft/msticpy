@@ -90,3 +90,59 @@ def test_format_py_identifier():
     check.equal(utils.valid_pyname("has space"), "has_space")
     check.equal(utils.valid_pyname("has-dash"), "has_dash")
     check.equal(utils.valid_pyname("10.starts,digit$"), "n_10_starts_digit_")
+
+
+_D1 = {
+    "one": "d1_one_val",
+    "two": {"two_c": "d1_two_val"},
+    "five": {
+        "five_c": {"five_cc": "d1_five_val"},
+        "seven": "d1_seven_val",
+    },
+    "eight": "d1_eight_val",
+}
+_D2 = {"one": "d2_one_val", "four": {"four_c": "d2_four_val"}, "three": "d2_three_val"}
+_D3 = {
+    "one": "d3_one_val",
+    "two": {"two_c": "d3_two_val"},
+    "five": {
+        "five_c": {"five_cc": "d3_five_val"},
+        "six": "d3_six_val",
+    },
+}
+
+
+def test_collapse_dicts():
+    """Test collapsing one or more dictionaries."""
+    d_out = utils.collapse_dicts(_D1)
+    check.equal(d_out, _D1)
+
+    d_out = utils.collapse_dicts(_D1, _D2)
+    check.equal(
+        d_out,
+        {
+            "three": "d2_three_val",
+            "one": "d2_one_val",
+            "four": {"four_c": "d2_four_val"},
+            "five": {"five_c": {"five_cc": "d1_five_val"}, "seven": "d1_seven_val"},
+            "eight": "d1_eight_val",
+            "two": {"two_c": "d1_two_val"},
+        },
+    )
+
+    d_out = utils.collapse_dicts(_D1, _D2, _D3)
+    check.equal(
+        d_out,
+        {
+            "one": "d3_one_val",
+            "eight": "d1_eight_val",
+            "four": {"four_c": "d2_four_val"},
+            "three": "d2_three_val",
+            "five": {
+                "seven": "d1_seven_val",
+                "five_c": {"five_cc": "d3_five_val"},
+                "six": "d3_six_val",
+            },
+            "two": {"two_c": "d3_two_val"},
+        },
+    )

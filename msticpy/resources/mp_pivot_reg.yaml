@@ -70,6 +70,7 @@ pivot_providers:
       all_columns: True
       show_progress: False
     func_input_value_arg: ip_address
+    create_shortcut: True
   ip_type:
     src_module: msticpy.sectools.ip_utils
     src_func_name: get_ip_type
@@ -82,6 +83,7 @@ pivot_providers:
     func_df_col_param_name: ip
     func_out_column_name: ip
     func_input_value_arg: ip_str
+    create_shortcut: True
   b64_unpack:
     src_module: msticpy.sectools.base64unpack
     src_func_name: unpack_df
@@ -129,6 +131,7 @@ pivot_providers:
       Host: fqdn
       Dns: DomainName
     func_input_value_arg: url_domain
+    create_shortcut: True
   domain_valid_in_abuse_list:
     src_module: msticpy.sectools.domain_utils
     src_class: DomainValidator
@@ -178,6 +181,7 @@ pivot_providers:
       Host: fqdn
       Dns: DomainName
     func_input_value_arg: url_domain
+    create_shortcut: True
   ip_rev_resolve:
     src_module: msticpy.sectools.domain_utils
     src_func_name: ip_rev_resolve
@@ -190,7 +194,7 @@ pivot_providers:
     src_module: msticpy.sectools.geoip
     src_class: GeoLiteLookup
     src_func_name: lookup_ips
-    func_new_name: geoloc_mm
+    func_new_name: geoloc
     input_type: dataframe
     entity_map:
       IpAddress: Address
@@ -198,6 +202,7 @@ pivot_providers:
     func_df_col_param_name: column
     func_out_column_name: IpAddress
     func_input_value_arg: ip_address
+    create_shortcut: True
   geoip_ipstack:
     src_module: msticpy.sectools.geoip
     src_class: IPStackLookup

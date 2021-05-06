@@ -72,7 +72,7 @@ def load_user_defaults() -> Dict[str, object]:
     if not user_defaults:
         return {}
     prov_dict = _load_query_providers(user_defaults)
-    prov_dict.update(_load_components(user_defaults, prov_dict))
+    prov_dict.update(_load_components(user_defaults, namespace=prov_dict))
 
     return prov_dict
 
@@ -202,12 +202,12 @@ def _load_notebooklets(comp_settings=None, **kwargs):
             nbinit_params.update(
                 {f"{prov_name}_{name}": val for name, val in prov_args.items()}
             )
-    cur_provs = kwargs.pop("global_ns", {})
-    cur_provs.update(kwargs.pop("local_ns", {}))
-    providers = _get_provider_names(cur_provs)
+    namespace = kwargs.pop("global_ns", {})
+    namespace.update(kwargs.pop("local_ns", {}))
+    providers = _get_provider_names(namespace)
     # Add these as additional providers
     providers = [f"+{prov}" for prov in providers]
-    nbinit_params.update({"providers": providers})
+    nbinit_params.update({"providers": providers, "namespace": namespace})
     try:
         import msticnb
 

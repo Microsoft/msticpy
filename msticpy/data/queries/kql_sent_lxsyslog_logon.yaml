@@ -3,77 +3,72 @@ metadata:
   description: Linux Syslog Logon Data Queries
   data_environments: [LogAnalytics]
   data_families: [LinuxSyslog]
-  tags: ['linux', 'syslog']
-  aliases:
-    &logon_failures '
-      {table}
-      | where {subscription_filter}
-      | where TimeGenerated >= datetime({start})
-      | where TimeGenerated <= datetime({end})
-      $<query_condition>$
-      | where Facility in ("auth", "authpriv")
-        and ProcessName != "CRON" and ProcessName != "sudo"
-      | where (SyslogMessage contains "failure"
-              or SyslogMessage contains "invalid"
-              or SyslogMessage contains "Unable to negotiate"
-              or SyslogMessage contains "authentication failures"
-              or SyslogMessage contains "Did not receive identification"
-              or SyslogMessage contains " Bad protocol version identification"
-              or SyslogMessage matches regex "^Connection closed .* [preauth]")
-            or (Facility == "authpriv" and ProcessName == "su"
-              and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_")
-      | extend
-        User = iif(SyslogMessage contains "publickey",
-            extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
-            extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
-        LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
-                            " (", ProcessName, ")"),
-        SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
-        SourcePort = extract("port ([0-9]+)", 1, SyslogMessage),
-        UID = extract("uid=([0-9]+)", 1, SyslogMessage)
-      {add_query_items}'
+  tags: ["linux", "syslog"]
+  aliases: &logon_failures '
+    {table}
+    | where {subscription_filter}
+    | where TimeGenerated >= datetime({start})
+    | where TimeGenerated <= datetime({end})
+    $<query_condition>$
+    | where Facility in ("auth", "authpriv")
+    and ProcessName != "CRON" and ProcessName != "sudo"
+    | where (SyslogMessage contains "failure"
+    or SyslogMessage contains "invalid"
+    or SyslogMessage contains "Unable to negotiate"
+    or SyslogMessage contains "authentication failures"
+    or SyslogMessage contains "Did not receive identification"
+    or SyslogMessage contains " Bad protocol version identification"
+    or SyslogMessage matches regex "^Connection closed .* [preauth]")
+    or (Facility == "authpriv" and ProcessName == "su"
+    and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_")
+    | extend
+    User = iif(SyslogMessage contains "publickey",
+    extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
+    extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
+    LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
+    " (", ProcessName, ")"),
+    SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
+    SourcePort = extract("port ([0-9]+)", 1, SyslogMessage),
+    UID = extract("uid=([0-9]+)", 1, SyslogMessage)
+    {add_query_items}'
 defaults:
   metadata:
-    data_source: 'linux_syslog'
+    data_source: "linux_syslog"
   parameters:
-      table:
-        description: Table name
-        type: str
-        default: 'Syslog'
-      start:
-        description: Query start time
-        type: datetime
-      end:
-        description: Query end time
-        type: datetime
-      account_name:
-        description: Optional user to filter on
-        type: str
-        default: ''
-      add_query_items:
-        description: Additional query clauses
-        type: str
-        default: ''
-      subscription_filter:
-        description: Optional subscription/tenant filter expression
-        type: str
-        default: 'true'
-      query_project:
-        description: Column project statement
-        type: str
-        default: '
-          | project
-            TenantId,
-            Computer,
-            Facility,
-            TimeGenerated,
-            HostName,
-            SeverityLevel,
-            SyslogMessage,
-            ProcessID,
-            ProcessName,
-            HostIP,
-          | extend TimeCreatedUtc=TimeGenerated'
+    table:
+      description: Table name
+      type: str
+      default: "Syslog"
+    start:
+      description: Query start time
+      type: datetime
+    end:
+      description: Query end time
+      type: datetime
+    add_query_items:
+      description: Additional query clauses
+      type: str
+      default: ""
+    subscription_filter:
+      description: Optional subscription/tenant filter expression
+      type: str
+      default: "true"
+    query_project:
+      description: Column project statement
+      type: str
+      default: "
+        | project
+        TenantId,
+        Computer,
+        Facility,
+        TimeGenerated,
+        HostName,
+        SeverityLevel,
+        SyslogMessage,
+        ProcessID,
+        ProcessName,
+        HostIP,
+        | extend TimeCreatedUtc=TimeGenerated"
 sources:
   user_logon:
     description: All user logon events on a host
@@ -87,33 +82,32 @@ sources:
         | where Facility == "auth" or Facility == "authpriv"
         | where ProcessName != "sudo" and ProcessName != "CRON"
         | extend LogonResult = iif(
-                                (SyslogMessage contains "failure"
-                                or SyslogMessage contains "invalid"
-                                or SyslogMessage contains "Unable to negotiate"
-                                or SyslogMessage contains "authentication failures"
-                                or SyslogMessage contains "Did not receive identification"
-                                or SyslogMessage contains " Bad protocol version identification"
-                                or SyslogMessage matches regex "^Connection closed .* [preauth]")
-                                or (Facility == "authpriv" and ProcessName == "su"
-                                  and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_"),
-                                "Failure",
-                                iif(
-                                    SyslogMessage contains "Accepted" or
-                                    (ProcessName == "su" and SyslogMessage contains "Successful"),
-                                    "Success", "Unknown"
-                                  )
-                                )
+        (SyslogMessage contains "failure"
+        or SyslogMessage contains "invalid"
+        or SyslogMessage contains "Unable to negotiate"
+        or SyslogMessage contains "authentication failures"
+        or SyslogMessage contains "Did not receive identification"
+        or SyslogMessage contains " Bad protocol version identification"
+        or SyslogMessage matches regex "^Connection closed .* [preauth]")
+        or (Facility == "authpriv" and ProcessName == "su"
+        and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_"),
+        "Failure",
+        iif(
+        SyslogMessage contains "Accepted" or
+        (ProcessName == "su" and SyslogMessage contains "Successful"),
+        "Success", "Unknown"
+        )
+        )
         | extend
-          User = iif(SyslogMessage contains "publickey",
-            extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
-            extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
-          LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
-                             " (", ProcessName, ")"),
-          SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
-          SourcePort = extract("port ([0-9]+)",1,SyslogMessage),
-          UID = extract("uid=([0-9]+)",1,SyslogMessage),
-          SourceUser = extract("(by |ruser=)([a-z_][a-z0-9_]*)",2, SyslogMessage)
-        | where User contains "{account_name}"
+        User = iif(SyslogMessage contains "publickey",
+        extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
+        extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
+        LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
+        " (", ProcessName, ")"),
+        SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
+        SourcePort = extract("port ([0-9]+)",1,SyslogMessage),
+        UID = extract("uid=([0-9]+)",1,SyslogMessage),
+        SourceUser = extract("(by |ruser=)([a-z_][a-z0-9_]*)",2, SyslogMessage)
         | extend AccountName = User
         {add_query_items}'
     parameters:
@@ -122,6 +116,11 @@ sources:
         type: str
   list_logons_for_account:
     description: All successful user logon events for account (all hosts)
+    metadata:
+      pivot:
+        short_name: logons
+        direct_func_entities:
+          - Account
     args:
       query: '
         {table}
@@ -129,40 +128,40 @@ sources:
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
         | where Facility in ("auth", "authpriv")
-          and ProcessName != "CRON" and ProcessName != "sudo"
+        and ProcessName != "CRON" and ProcessName != "sudo"
         | where SyslogMessage has "{account_name}"
         | where SyslogMessage startswith "Accepted"
         | extend mssg_strings = split(SyslogMessage, " ")
         | mvexpand mssg_item=mssg_strings
-        | where mssg_item has "{account_name}"
         | extend mssg_item = tostring(mssg_item)
         | extend AccountName = trim("\\.", mssg_item)
         | extend User = AccountName
+        | where User has "{account_name}"
         | project-away mssg_strings, mssg_item
         | distinct *
         | extend LogonResult = iif(
-                                   SyslogMessage contains "Accepted" or
-                                   (ProcessName == "su" and SyslogMessage contains "Successful"),
-                                   "Success",
-                                   iif(
-                                      (SyslogMessage contains "failure"
-                                        or SyslogMessage contains "invalid"
-                                        or SyslogMessage contains "Unable to negotiate"
-                                        or SyslogMessage contains "authentication failures"
-                                        or SyslogMessage contains "Did not receive identification"
-                                        or SyslogMessage contains " Bad protocol version identification"
-                                        or SyslogMessage matches regex "^Connection closed .* [preauth]")
-                                      or (Facility == "authpriv" and ProcessName == "su"
-                                        and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_"),
-                                      "Failure", "Unknown"
-                                    )
-                               )
+        SyslogMessage contains "Accepted" or
+        (ProcessName == "su" and SyslogMessage contains "Successful"),
+        "Success",
+        iif(
+        (SyslogMessage contains "failure"
+        or SyslogMessage contains "invalid"
+        or SyslogMessage contains "Unable to negotiate"
+        or SyslogMessage contains "authentication failures"
+        or SyslogMessage contains "Did not receive identification"
+        or SyslogMessage contains " Bad protocol version identification"
+        or SyslogMessage matches regex "^Connection closed .* [preauth]")
+        or (Facility == "authpriv" and ProcessName == "su"
+        and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_"),
+        "Failure", "Unknown"
+        )
+        )
         | extend
-          LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
-                             " (", ProcessName, ")"),
-          SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
-          SourcePort = extract("port ([0-9]+)", 1, SyslogMessage),
-          UID = extract("uid=([0-9]+)", 1, SyslogMessage)
+        LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
+        " (", ProcessName, ")"),
+        SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
+        SourcePort = extract("port ([0-9]+)", 1, SyslogMessage),
+        UID = extract("uid=([0-9]+)", 1, SyslogMessage)
         {add_query_items}'
     parameters:
       account_name:
@@ -170,6 +169,11 @@ sources:
         type: str
   list_logons_for_source_ip:
     description: All successful user logon events for source IP (all hosts)
+    metadata:
+      pivot:
+        short_name: logons
+        direct_func_entities:
+          - IpAddress
     args:
       query: '
         {table}
@@ -177,18 +181,18 @@ sources:
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
         | where Facility in ("auth", "authpriv")
-          and ProcessName != "CRON" and ProcessName != "sudo"
+        and ProcessName != "CRON" and ProcessName != "sudo"
         | where SyslogMessage has "{ip_address}"
         | where SyslogMessage startswith "Accepted"
         | extend
-          User = iif(SyslogMessage contains "publickey",
-            extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
-            extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
-          LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
-                             " (", ProcessName, ")"),
-          SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
-          SourcePort = extract("port ([0-9]+)", 1, SyslogMessage),
-          UID = extract("uid=([0-9]+)", 1, SyslogMessage)
+        User = iif(SyslogMessage contains "publickey",
+        extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
+        extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
+        LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
+        " (", ProcessName, ")"),
+        SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
+        SourcePort = extract("port ([0-9]+)", 1, SyslogMessage),
+        UID = extract("uid=([0-9]+)", 1, SyslogMessage)
         | extend AccountName = User
         {add_query_items}'
     parameters:
@@ -197,6 +201,11 @@ sources:
         type: str
   list_logons_for_host:
     description: All logon events on a host
+    metadata:
+      pivot:
+        short_name: logons
+        direct_func_entities:
+          - Host
     args:
       query: '
         {table}
@@ -207,32 +216,32 @@ sources:
         | where Facility == "auth" or Facility == "authpriv"
         | where ProcessName != "sudo" and ProcessName != "CRON"
         | extend LogonResult = iif(
-                                (SyslogMessage contains "failure"
-                                or SyslogMessage contains "invalid"
-                                or SyslogMessage contains "Unable to negotiate"
-                                or SyslogMessage contains "authentication failures"
-                                or SyslogMessage contains "Did not receive identification"
-                                or SyslogMessage contains " Bad protocol version identification"
-                                or SyslogMessage matches regex "^Connection closed .* [preauth]")
-                                or (Facility == "authpriv" and ProcessName == "su"
-                                  and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_"),
-                                "Failure",
-                                iif(
-                                    SyslogMessage contains "Accepted" or
-                                    (ProcessName == "su" and SyslogMessage contains "Successful"),
-                                    "Success", "Unknown"
-                                  )
-                                )
+        (SyslogMessage contains "failure"
+        or SyslogMessage contains "invalid"
+        or SyslogMessage contains "Unable to negotiate"
+        or SyslogMessage contains "authentication failures"
+        or SyslogMessage contains "Did not receive identification"
+        or SyslogMessage contains " Bad protocol version identification"
+        or SyslogMessage matches regex "^Connection closed .* [preauth]")
+        or (Facility == "authpriv" and ProcessName == "su"
+        and SyslogMessage contains "FAILED" and SyslogMessage !contains "pam_"),
+        "Failure",
+        iif(
+        SyslogMessage contains "Accepted" or
+        (ProcessName == "su" and SyslogMessage contains "Successful"),
+        "Success", "Unknown"
+        )
+        )
         | extend
-          User = iif(SyslogMessage contains "publickey",
-            extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
-            extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
-          LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
-                             " (", ProcessName, ")"),
-          SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
-          SourcePort = extract("port ([0-9]+)",1,SyslogMessage),
-          UID = extract("uid=([0-9]+)",1,SyslogMessage),
-          SourceUser = extract("(by |ruser=)([a-z_][a-z0-9_]*)",2, SyslogMessage)
+        User = iif(SyslogMessage contains "publickey",
+        extract("(for )([[:alnum:]]+)", 2, SyslogMessage),
+        extract("(user |user=)([[:alnum:]]+)",2,SyslogMessage)),
+        LogonType = strcat(extract("Accepted\\s+([^\\s]+)", 1, SyslogMessage),
+        " (", ProcessName, ")"),
+        SourceIP = extract("((?:[0-9]{{1,3}}\\.){{3}}[0-9]{{1,3}})", 1, SyslogMessage),
+        SourcePort = extract("port ([0-9]+)",1,SyslogMessage),
+        UID = extract("uid=([0-9]+)",1,SyslogMessage),
+        SourceUser = extract("(by |ruser=)([a-z_][a-z0-9_]*)",2, SyslogMessage)
         | extend Account = User
         | extend LogonTypeName = ProcessName
         | extend LogonProcessName = ProcessName
@@ -243,6 +252,11 @@ sources:
         type: str
   list_host_logon_failures:
     description: All failed user logon events on a host
+    metadata:
+      pivot:
+        short_name: logon_failures
+        direct_func_entities:
+          - Host
     args:
       query: *logon_failures
     parameters:
@@ -253,6 +267,40 @@ sources:
       query_condition:
         description: Hostname where clause
         value: '| where Computer has "{host_name}"'
+  list_ip_logon_failures:
+    description: All failed user logon events from an IP address
+    metadata:
+      pivot:
+        short_name: logon_failures
+        direct_func_entities:
+          - IpAddress
+    args:
+      query: *logon_failures
+    parameters:
+      ip_address:
+        description: Ip Address to query for
+        type: str
+    query_macros:
+      query_condition:
+        description: IP Address where clause
+        value: '| where SyslogMessage has "{ip_address}"'
+  list_account_logon_failures:
+    description: All failed user logon events from an IP address
+    metadata:
+      pivot:
+        short_name: logon_failures
+        direct_func_entities:
+          - Account
+    args:
+      query: *logon_failures
+    parameters:
+      account_name:
+        description: The account name to search on
+        type: str
+    query_macros:
+      query_condition:
+        description: Account where clause
+        value: '| where SyslogMessage has "{account_name}"'
   list_logon_failures:
     description: All failed user logon events on any host
     args:
@@ -261,4 +309,4 @@ sources:
     query_macros:
       query_condition:
         description: Null where clause
-        value: ''
+        value: ""

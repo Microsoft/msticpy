@@ -48,6 +48,8 @@ class Alert(Entity):
 
     """
 
+    ID_PROPERTIES = ["SystemAlertIds"]
+
     def __init__(self, src_entity: Mapping[str, Any] = None, **kwargs):
         """
         Create a new instance of the entity type.

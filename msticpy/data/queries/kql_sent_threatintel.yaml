@@ -28,9 +28,6 @@ defaults:
         description: Additional query clauses
         type: str
         default: ''
-      observables:
-        description: List of observables
-        type: list
 sources:
   list_indicators:
     description: Retrieves list of all current indicators.
@@ -66,15 +63,15 @@ sources:
         {query_project}
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
-        | where NetworkIP in ({observables})
-          or NetworkDestinationIP in ({observables})
-          or NetworkSourceIP in ({observables})
-          or EmailSourceIpAddress in ({observables})
+        | where NetworkIP in ({ip_address_list})
+          or NetworkDestinationIP in ({ip_address_list})
+          or NetworkSourceIP in ({ip_address_list})
+          or EmailSourceIpAddress in ({ip_address_list})
         | extend IoC = tolower(
-            iff(isnotempty(NetworkIP) and NetworkIP in ({observables}), NetworkIP,
-              iff(isnotempty(NetworkDestinationIP) and NetworkDestinationIP in ({observables}), NetworkDestinationIP,
-                iff(isnotempty(NetworkSourceIP) and NetworkSourceIP in ({observables}), NetworkSourceIP,
-                  iff(isnotempty(EmailSourceIpAddress) and EmailSourceIpAddress in ({observables}), EmailSourceIpAddress, "")
+            iff(isnotempty(NetworkIP) and NetworkIP in ({ip_address_list}), NetworkIP,
+              iff(isnotempty(NetworkDestinationIP) and NetworkDestinationIP in ({ip_address_list}), NetworkDestinationIP,
+                iff(isnotempty(NetworkSourceIP) and NetworkSourceIP in ({ip_address_list}), NetworkSourceIP,
+                  iff(isnotempty(EmailSourceIpAddress) and EmailSourceIpAddress in ({ip_address_list}), EmailSourceIpAddress, "")
                   )
                 )
               )
@@ -82,6 +79,10 @@ sources:
         | summarize arg_max(TimeGenerated, *) by IndicatorId
         {add_query_items}'
     parameters:
+      ip_address_list:
+        description: Ip Address to query for
+        type: list
+        aliases: observables
   list_indicators_by_hash:
     description: Retrieves list of indicators by file hash
     metadata:
@@ -91,11 +92,15 @@ sources:
         {query_project}
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
-        | where FileHashValue in~ ({observables})
+        | where FileHashValue in~ ({file_hash_list})
         | extend IoC = tolower(FileHashValue)
         | summarize arg_max(TimeGenerated, *) by IndicatorId
         {add_query_items}'
     parameters:
+      file_hash_list:
+        description: File hash(es) to query for
+        type: list
+        aliases: observables
   list_indicators_by_filepath:
     description: Retrieves list of indicators by file path
     metadata:
@@ -109,6 +114,10 @@ sources:
         | extend IoC = tolower(FilePath)
         | summarize arg_max(TimeGenerated, *) by IndicatorId
         {add_query_items}'
+    parameters:
+      observables:
+        description: List of observables
+        type: list
   list_indicators_by_domain:
     description: Retrieves list of indicators by domain
     metadata:
@@ -118,16 +127,20 @@ sources:
         {query_project}
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
-        | where DomainName in~ ({observables})
-          or EmailSourceDomain in~ ({observables})
+        | where DomainName in~ ({domain_list})
+          or EmailSourceDomain in~ ({domain_list})
         | extend IoC = tolower(
-            iff(isnotempty(DomainName) and DomainName in~ ({observables}), DomainName,
-              iff(isnotempty(EmailSourceDomain) and EmailSourceDomain in~ ({observables}), EmailSourceDomain, "")
+            iff(isnotempty(DomainName) and DomainName in~ ({domain_list}), DomainName,
+              iff(isnotempty(EmailSourceDomain) and EmailSourceDomain in~ ({domain_list}), EmailSourceDomain, "")
               )
             )
         | summarize arg_max(TimeGenerated, *) by IndicatorId
         {add_query_items}'
     parameters:
+      domain_list:
+        description: Domain(s) to query for
+        type: list
+        aliases: observables
   list_indicators_by_email:
     description: Retrieves list of indicators by email address
     metadata:
@@ -147,6 +160,9 @@ sources:
         | summarize arg_max(TimeGenerated, *) by IndicatorId
         {add_query_items}'
     parameters:
+      observables:
+        description: List of observables
+        type: list
   list_indicators_by_url:
     description: Retrieves list of indicators by URL
     metadata:
@@ -156,9 +172,12 @@ sources:
         {query_project}
         | where TimeGenerated >= datetime({start})
         | where TimeGenerated <= datetime({end})
-        | where Url in~ ({observables})
+        | where Url in~ ({url_list})
         | extend IoC = tolower(Url)
         | summarize arg_max(TimeGenerated, *) by IndicatorId
         {add_query_items}'
     parameters:
-    
+      url_list:
+        description: URL(s) to query for
+        type: list
+        aliases: observables

@@ -51,8 +51,8 @@ sources:
         | summarize alertCount=count(), firstAlert=min(TimeGenerated),
             lastAlert=max(TimeGenerated) by AlertName
         | order by alertCount desc
+        | where Computer = {host_name}
         {add_query_items}'
     parameters:
-      table:
-        description: Table name
-        default: 'SecurityAlert'
+      host_name:
+        description: Host name

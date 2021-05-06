@@ -33,7 +33,10 @@ defaults:
         | top 1 by TimeGenerated desc nulls last'
 sources:
   get_info_by_hostname:
-    description: Retrieves Information by Hostname
+    description: Deprecated - use 'get_heartbeat_for_host'
+    metadata:
+      pivot:
+        short_name: heartbeat_for_host_depr
     args:
       query: '
         {table}
@@ -52,7 +55,10 @@ sources:
         type: str
         default: has
   get_info_by_ipaddress:
-    description: Retrieves Information by IP address
+    description: Deprecated - use 'get_heartbeat_for_ip'
+    metadata:
+      pivot:
+        short_name: heartbeat_for_ip_depr
     args:
       query: '
         {table}

@@ -116,7 +116,7 @@ def dbcluster_events(
         x_input = data if cluster_columns is None else data[:, cluster_columns].values
     if x_input is None:
         mssg = "Input data not in expected format.\n{} is not one of allowed types {}"
-        type_list = ", ".join([str(t) for t in allowed_types])
+        type_list = ", ".join(str(t) for t in allowed_types)
         mssg = mssg.format(str(type(data)), type_list)
         raise ValueError(mssg)
 
@@ -140,7 +140,7 @@ def dbcluster_events(
             len(cluster_set),
             " clusters",
         )
-        print("Individual cluster sizes: ", ", ".join([str(c) for c in counts]))
+        print("Individual cluster sizes: ", ", ".join(str(c) for c in counts))
 
     clustered_events = _merge_clustered_items(
         cluster_set, labels, data, time_column, counts
