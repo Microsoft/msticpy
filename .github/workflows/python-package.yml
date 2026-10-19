@@ -94,7 +94,7 @@ jobs:
           pytest tests -n auto --junitxml=junit/test-${{ matrix.python-version }}-results.xml --cov=msticpy --cov-report=xml
         if: ${{ always() }}
       - name: Upload pytest test results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: pytest-results-${{ matrix.python-version }}
           path: junit/test-${{ matrix.python-version }}-results.xml
@@ -199,7 +199,7 @@ jobs:
           mypy --ignore-missing-imports --follow-imports=silent --show-column-numbers --show-error-end --show-error-context --disable-error-code annotation-unchecked --python-version ${{ matrix.python-version }} --junit-xml junit/mypy-test-${{ matrix.python-version }}-results.xml msticpy
         if: ${{ always() }}
       - name: Upload mypy test results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Mypy results ${{ matrix.python-version }}
           path: junit/mypy-test-${{ matrix.python-version }}-results.xml
